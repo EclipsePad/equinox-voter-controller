@@ -132,9 +132,17 @@ function getBlockTime(blockTimeOffset: number): number {
 async function writeSnapshot(fileName: string, file: any) {
   const path = rootPath(`./src/backend/services/snapshots/${fileName}.json`);
 
-  await writeFile(path, JSON.stringify(file, null, 2), {
+  await writeFile(path, JSON.stringify(file), {
     encoding: ENCODING,
   });
+}
+
+async function readSnapshot<T>(fileName: string): Promise<T> {
+  const path = rootPath(`./src/backend/services/snapshots/${fileName}.json`);
+
+  return (await readFile(path, {
+    encoding: ENCODING,
+  })) as T;
 }
 
 export {
@@ -150,4 +158,5 @@ export {
   getLocalBlockTime,
   getBlockTime,
   writeSnapshot,
+  readSnapshot,
 };

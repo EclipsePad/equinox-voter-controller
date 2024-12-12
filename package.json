@@ -9,7 +9,9 @@
   },
   "scripts": {
     "call": "ts-node ./src/backend/services/call-contract.ts",
-    "json": "ts-node ./src/backend/services/generate-json.ts"
+    "json": "ts-node ./src/backend/services/generate-json.ts",
+    "start": "ts-node --project ./src/backend/tsconfig.json ./src/backend/index.ts",
+    "dev": "cross-env NODE_ENV=development nodemon"
   },
   "repository": {
     "type": "git",
@@ -28,17 +30,24 @@
     "@cosmjs/stargate": "^0.32.2",
     "axios": "^1.6.7",
     "chain-registry": "^1.28.0",
+    "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
     "decimal.js": "^10.4.3",
     "dotenv": "^16.4.1",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.4.1",
+    "helmet": "^8.0.0",
     "util": "^0.12.5"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
     "@types/crypto-js": "^4.2.2",
+    "@types/express": "^5.0.0",
     "@types/node": "^20.11.16",
     "@types/pako": "^2.0.3",
     "cosmjs-types": "^0.9.0",
     "cross-env": "^7.0.3",
+    "nodemon": "^3.1.7",
     "pako": "^2.1.0",
     "typescript": "^5.3.3"
   }

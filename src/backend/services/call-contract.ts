@@ -2,17 +2,9 @@ import { getSigner } from "../account/signer";
 import { getLast, l, li, wait } from "../../common/utils";
 import { readFile } from "fs/promises";
 import { ChainConfig } from "../../common/interfaces";
-import { ADDRESS } from "../../common/config";
-import {
-  ENCODING,
-  PATH_TO_CONFIG_JSON,
-  parseStoreArgs,
-  writeSnapshot,
-} from "./utils";
-import {
-  getChainOptionById,
-  getContractByLabel,
-} from "../../common/config/config-utils";
+import { ENCODING, PATH_TO_CONFIG_JSON, writeSnapshot } from "./utils";
+import { getChainOptionById } from "../../common/config/config-utils";
+import { SEED } from "../envs";
 import {
   getSgQueryHelpers,
   getSgExecHelpers,
@@ -21,24 +13,20 @@ import {
   getCwExecHelpers,
   getCwQueryHelpers,
 } from "../../common/account/cw-helpers";
-import { SEED } from "../envs";
 
 async function main() {
   try {
-    const { chainId } = parseStoreArgs();
+    const chainId = "neutron-1";
     const configJsonStr = await readFile(PATH_TO_CONFIG_JSON, {
       encoding: ENCODING,
     });
     const CHAIN_CONFIG: ChainConfig = JSON.parse(configJsonStr);
     const {
-      NAME,
       PREFIX,
       OPTION: {
         RPC_LIST: [RPC],
         DENOM,
-        CONTRACTS,
         GAS_PRICE_AMOUNT,
-        TYPE,
       },
     } = getChainOptionById(CHAIN_CONFIG, chainId);
 
