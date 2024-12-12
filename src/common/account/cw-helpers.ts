@@ -254,6 +254,7 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
       lastItem = getLast(userListResponse.list)?.address || "";
       allItems = [...allItems, ...userListResponse.list];
       count += userListResponse.list.length;
+      l({ count });
     }
 
     if (maxCount) {

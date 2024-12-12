@@ -1,8 +1,8 @@
-import { access, readFile, writeFile } from "fs/promises";
-import { decrypt, floor, getLast, l } from "../../common/utils";
-import { PATH, rootPath } from "../envs";
+import { readFile, writeFile } from "fs/promises";
+import { floor, getLast, l } from "../../common/utils";
+import { rootPath, SEED } from "../envs";
 import { Label } from "../../common/config";
-import { ChainType, Wallets, StoreArgs } from "../../common/interfaces";
+import { StoreArgs } from "../../common/interfaces";
 
 const ENCODING = "utf8";
 const PATH_TO_CONFIG_JSON = rootPath("./src/common/config/config.json");
@@ -26,50 +26,6 @@ function parseChainId(): string {
   if (arg.includes("/")) throw new Error("Network name is not specified!");
 
   return arg;
-}
-
-async function decryptSeed(seedEncrypted: string) {
-  const keyPath = rootPath(PATH.TO_ENCRYPTION_KEY);
-
-  await access(keyPath);
-  const encryptionKey = await readFile(keyPath, { encoding: ENCODING });
-  const seed = decrypt(seedEncrypted, encryptionKey);
-  if (!seed) throw new Error("The seed can not be decrypted!");
-
-  return seed;
-}
-
-async function getWallets(chainType: ChainType): Promise<Wallets> {
-  if (chainType === "local") {
-    const testWallets: Wallets = JSON.parse(
-      await readFile(PATH.TO_TEST_WALLETS_PUBLIC, { encoding: ENCODING })
-    );
-
-    return testWallets;
-  }
-
-  const keyPath = rootPath(PATH.TO_ENCRYPTION_KEY);
-  let testWallets: Wallets = JSON.parse(
-    await readFile(PATH.TO_TEST_WALLETS, { encoding: ENCODING })
-  );
-
-  await access(keyPath);
-  const encryptionKey = await readFile(keyPath, { encoding: ENCODING });
-
-  for (const [k, v] of Object.entries(testWallets)) {
-    const seed = decrypt(v, encryptionKey);
-    if (!seed) throw new Error("Can not get seed!");
-
-    testWallets = { ...testWallets, ...{ [k]: seed } };
-  }
-
-  return testWallets;
-}
-
-function getSnapshotPath(name: string, chainType: ChainType, fileName: string) {
-  return rootPath(
-    `./src/backend/services/snapshots/${name}/${chainType}net/${fileName}`
-  );
 }
 
 /**
@@ -184,11 +140,8 @@ async function writeSnapshot(fileName: string, file: any) {
 export {
   ENCODING,
   PATH_TO_CONFIG_JSON,
-  decryptSeed,
   parseChainId,
   parseStoreArgs,
-  getWallets,
-  getSnapshotPath,
   epochToDateString,
   dateStringToEpoch,
   epochToDateStringUTC,

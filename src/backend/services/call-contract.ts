@@ -6,7 +6,6 @@ import { ADDRESS } from "../../common/config";
 import {
   ENCODING,
   PATH_TO_CONFIG_JSON,
-  getWallets,
   parseStoreArgs,
   writeSnapshot,
 } from "./utils";
@@ -22,6 +21,7 @@ import {
   getCwExecHelpers,
   getCwQueryHelpers,
 } from "../../common/account/cw-helpers";
+import { SEED } from "../envs";
 
 async function main() {
   try {
@@ -43,8 +43,8 @@ async function main() {
     } = getChainOptionById(CHAIN_CONFIG, chainId);
 
     const gasPrice = `${GAS_PRICE_AMOUNT}${DENOM}`;
-    const testWallets = await getWallets(TYPE);
-    const { signer, owner } = await getSigner(PREFIX, testWallets.SEED_ADMIN);
+
+    const { signer, owner } = await getSigner(PREFIX, SEED);
 
     const sgQueryHelpers = await getSgQueryHelpers(RPC);
     const sgExecHelpers = await getSgExecHelpers(RPC, owner, signer);
