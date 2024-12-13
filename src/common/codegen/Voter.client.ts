@@ -298,6 +298,7 @@ export interface VoterInterface extends VoterReadOnlyInterface {
     astroportStaking,
     astroportTributeMarket,
     astroportVotingEscrow,
+    controller,
     eclipseDao,
     eclipseMinter,
     eclipseSingleSidedVault,
@@ -313,6 +314,7 @@ export interface VoterInterface extends VoterReadOnlyInterface {
     astroportStaking?: string;
     astroportTributeMarket?: string;
     astroportVotingEscrow?: string;
+    controller?: string;
     eclipseDao?: string;
     eclipseMinter?: string;
     eclipseSingleSidedVault?: string;
@@ -445,6 +447,7 @@ export class VoterClient extends VoterQueryClient implements VoterInterface {
     astroportStaking,
     astroportTributeMarket,
     astroportVotingEscrow,
+    controller,
     eclipseDao,
     eclipseMinter,
     eclipseSingleSidedVault,
@@ -460,6 +463,7 @@ export class VoterClient extends VoterQueryClient implements VoterInterface {
     astroportStaking?: string;
     astroportTributeMarket?: string;
     astroportVotingEscrow?: string;
+    controller?: string;
     eclipseDao?: string;
     eclipseMinter?: string;
     eclipseSingleSidedVault?: string;
@@ -477,6 +481,7 @@ export class VoterClient extends VoterQueryClient implements VoterInterface {
         astroport_staking: astroportStaking,
         astroport_tribute_market: astroportTributeMarket,
         astroport_voting_escrow: astroportVotingEscrow,
+        controller,
         eclipse_dao: eclipseDao,
         eclipse_minter: eclipseMinter,
         eclipse_single_sided_vault: eclipseSingleSidedVault,

@@ -12,6 +12,7 @@ export interface InstantiateMsg {
   astroport_staking: string;
   astroport_tribute_market?: string | null;
   astroport_voting_escrow: string;
+  controller?: string | null;
   eclip: string;
   eclip_astro: string;
   eclipse_dao: string;
@@ -44,6 +45,7 @@ export type ExecuteMsg = {
     astroport_staking?: string | null;
     astroport_tribute_market?: string | null;
     astroport_voting_escrow?: string | null;
+    controller?: string | null;
     eclipse_dao?: string | null;
     eclipse_minter?: string | null;
     eclipse_single_sided_vault?: string | null;
@@ -203,6 +205,7 @@ export interface AddressConfig {
   astroport_staking: Addr;
   astroport_tribute_market?: Addr | null;
   astroport_voting_escrow: Addr;
+  controller: Addr;
   eclipse_dao: Addr;
   eclipse_minter: Addr;
   eclipse_single_sided_vault?: Addr | null;

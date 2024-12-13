@@ -24,6 +24,7 @@ export interface VoterMsg {
     astroportStaking,
     astroportTributeMarket,
     astroportVotingEscrow,
+    controller,
     eclipseDao,
     eclipseMinter,
     eclipseSingleSidedVault,
@@ -39,6 +40,7 @@ export interface VoterMsg {
     astroportStaking?: string;
     astroportTributeMarket?: string;
     astroportVotingEscrow?: string;
+    controller?: string;
     eclipseDao?: string;
     eclipseMinter?: string;
     eclipseSingleSidedVault?: string;
@@ -200,6 +202,7 @@ export class VoterMsgComposer implements VoterMsg {
     astroportStaking,
     astroportTributeMarket,
     astroportVotingEscrow,
+    controller,
     eclipseDao,
     eclipseMinter,
     eclipseSingleSidedVault,
@@ -215,6 +218,7 @@ export class VoterMsgComposer implements VoterMsg {
     astroportStaking?: string;
     astroportTributeMarket?: string;
     astroportVotingEscrow?: string;
+    controller?: string;
     eclipseDao?: string;
     eclipseMinter?: string;
     eclipseSingleSidedVault?: string;
@@ -237,6 +241,7 @@ export class VoterMsgComposer implements VoterMsg {
             astroport_staking: astroportStaking,
             astroport_tribute_market: astroportTributeMarket,
             astroport_voting_escrow: astroportVotingEscrow,
+            controller,
             eclipse_dao: eclipseDao,
             eclipse_minter: eclipseMinter,
             eclipse_single_sided_vault: eclipseSingleSidedVault,
