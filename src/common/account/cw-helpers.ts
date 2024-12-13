@@ -203,7 +203,8 @@ async function getCwExecHelpers(
   async function cwPushByAdmin(gasPrice: string) {
     return await _msgWrapperWithGasPrice(
       [voterMsgComposer.pushByAdmin()],
-      gasPrice
+      gasPrice,
+      1.5
     );
   }
 
@@ -232,6 +233,11 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
   );
 
   // voter
+
+  async function cwQueryOperationStatus(isDisplayed: boolean = false) {
+    const res = await voterQueryClient.operationStatus();
+    return logAndReturn(res, isDisplayed);
+  }
 
   async function pQueryUserList(
     maxPaginationAmount: number,
@@ -266,6 +272,7 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
 
   return {
     voter: {
+      cwQueryOperationStatus,
       pQueryUserList,
     },
   };
