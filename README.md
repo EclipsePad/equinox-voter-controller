@@ -104,7 +104,7 @@ Add this line to restart the service every day at 8 pm UTC
 
 Verify service status
 ```
-sudo systemctl status your-app.service
+sudo systemctl status voter.service
 ```
 
 8) Run the server
