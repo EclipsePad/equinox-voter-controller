@@ -74,7 +74,7 @@ yarn run start
 Base URL is `http://<server_ip>:<port>/api`
 
 GET requests:
-`/get-voter` - returns previous epoch [UserListResponseItem[]](https://github.com/EclipsePad/eclipse-contracts-core/blob/main/scripts/src/interfaces/Voter.types.ts#L277)
+`/get-voters` - returns previous epoch [UserListResponseItem[]](https://github.com/EclipsePad/eclipse-contracts-core/blob/main/scripts/src/interfaces/Voter.types.ts#L277)
 
 
 
