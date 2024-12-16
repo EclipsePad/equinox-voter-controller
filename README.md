@@ -5,7 +5,12 @@
 
 ### Settings (Ubuntu 22.04)
 
-1) Install required system updates and components
+1) Connect to server over SSH
+```
+ssh <username>@<server_ip>
+```
+
+2) Install required system updates and components
 ```
 sudo apt update && sudo apt -y upgrade
 sudo apt-get install nano
@@ -13,7 +18,7 @@ sudo apt-get install -y curl
 sudo apt-get install git
 ```
 
-2) Install and check Node.js 20, yarn
+3) Install and check Node.js 20, yarn
 ```
 curl -fsSL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh
 sudo -E bash nodesource_setup.sh
@@ -24,15 +29,18 @@ npm install --global yarn
 yarn -v
 ```
 
-3) Clone the project repositiry and install dependencies
+4) Clone the project repositiry and install dependencies
 
 ```
 git clone https://github.com/EclipsePad/equinox-voter-controller.git
 cd equinox-voter-controller
+mkdir ./src/backend/services/snapshots
+touch ./src/backend/services/snapshots/voters.json
 yarn
+yarn add ts-node
 ```
 
-4) Create env file and specify seed phrase for account sending messages to voter contract
+5) Create env file and specify seed phrase for account sending messages to voter contract
 
 ```
 touch config.env
@@ -49,9 +57,9 @@ SEED="<your_seed_phrase>"
 
 Save the file (Ctrl+X, then Y, then Enter)
 
-5) Replenish the account balance with several amount of NTRN
+6) Replenish the account balance with several amount of NTRN
 
-6) Specify the account address in address config of the voter contract
+7) Specify the account address in address config of the voter contract
 
 ```
 {
@@ -61,7 +69,7 @@ Save the file (Ctrl+X, then Y, then Enter)
 }
 ```
 
-7) Enable restarting server on schedule and running script on system start
+8) Enable restarting server on schedule and running script on system start
 
 Create a systemd service file for the application
 ```
@@ -107,10 +115,16 @@ Verify service status
 sudo systemctl status voter.service
 ```
 
-8) Run the server
+9) Run the server
 
 ```
 yarn run start
+```
+
+Note: to find and kill uncompleted process use
+```
+sudo lsof -i :<port>
+kill -9 <PID>
 ```
 
 

@@ -139,10 +139,11 @@ async function writeSnapshot(fileName: string, file: any) {
 
 async function readSnapshot<T>(fileName: string): Promise<T> {
   const path = rootPath(`./src/backend/services/snapshots/${fileName}.json`);
-
-  return (await readFile(path, {
+  const data = await readFile(path, {
     encoding: ENCODING,
-  })) as T;
+  });
+
+  return (data.trim() || []) as T;
 }
 
 export {
