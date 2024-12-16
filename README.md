@@ -13,7 +13,6 @@ ssh <username>@<server_ip>
 2) Install required system updates and components
 ```
 sudo apt update && sudo apt -y upgrade
-sudo apt-get install nano
 sudo apt-get install -y curl
 sudo apt-get install git
 ```
@@ -33,11 +32,7 @@ yarn -v
 
 ```
 git clone https://github.com/EclipsePad/equinox-voter-controller.git
-cd equinox-voter-controller
-mkdir ./src/backend/services/snapshots
-touch ./src/backend/services/snapshots/voters.json
-yarn
-yarn add ts-node
+cd equinox-voter-controller && yarn
 ```
 
 5) Create env file and specify seed phrase for account sending messages to voter contract

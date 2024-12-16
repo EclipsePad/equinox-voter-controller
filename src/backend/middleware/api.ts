@@ -5,7 +5,7 @@ async function getVoters() {
   let voters: UserListResponseItem[] = [];
 
   try {
-    voters = await readSnapshot("voters");
+    voters = await readSnapshot("voters", []);
   } catch (_) {}
 
   return voters;

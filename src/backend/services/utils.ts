@@ -137,13 +137,15 @@ async function writeSnapshot(fileName: string, file: any) {
   });
 }
 
-async function readSnapshot<T>(fileName: string): Promise<T> {
+async function readSnapshot<T>(fileName: string, defaultValue: T): Promise<T> {
   const path = rootPath(`./src/backend/services/snapshots/${fileName}.json`);
-  const data = await readFile(path, {
-    encoding: ENCODING,
-  });
+  const data = (
+    await readFile(path, {
+      encoding: ENCODING,
+    })
+  ).trim();
 
-  return (data.trim() || []) as T;
+  return data ? JSON.parse(data) : defaultValue;
 }
 
 export {
