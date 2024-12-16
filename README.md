@@ -3,7 +3,7 @@
 ***equinox-voter-controller*** is a script running Express.js server to send `PushByAdmin` msg to voter contract every minute and make a snapshot via [capture-voters](https://github.com/EclipsePad/eclipse-contracts-core/blob/main/scripts/src/workflow/capture-voters.ts) script at the end of each epoch
 
 
-### Initial Settings (for Ubuntu 22.04)
+### Settings (Ubuntu 22.04)
 
 1) Install required system updates and components
 ```
@@ -40,11 +40,11 @@ chmod 600 ./config.env
 nano ./config.env
 ```
 
-Enter (without braces)
+Enter actual values (replace placeholders <_>)
 
 ```
-PORT=<PORT_NUMBER>
-SEED="<your seed phrase>"
+PORT=<port_number>
+SEED="<your_seed_phrase>"
 ```
 
 Save the file (Ctrl+X, then Y, then Enter)
@@ -61,13 +61,58 @@ Save the file (Ctrl+X, then Y, then Enter)
 }
 ```
 
-### Usage
+7) Enable restarting server on schedule and running script on system start
 
-Run the server
+Create a systemd service file for the application
+```
+nano /etc/systemd/system/voter.service
+```
+
+Add this content (replace placeholders <_>)
+```
+[Unit]
+Description=Equinox Voter Controller
+After=network.target
+
+[Service]
+Type=simple
+User=<username>
+WorkingDirectory=<path_to_the_project>
+ExecStart=/usr/bin/yarn run start
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start the service
+```
+sudo systemctl daemon-reload
+sudo systemctl enable voter.service
+sudo systemctl start voter.service
+```
+
+Open the crontab for root
+```
+sudo crontab -e
+```
+
+Add this line to restart the service every day at 8 pm UTC
+```
+0 20 * * * /usr/bin/systemctl restart voter.service
+```
+
+Verify service status
+```
+sudo systemctl status your-app.service
+```
+
+8) Run the server
 
 ```
 yarn run start
 ```
+
 
 ## REST API
 
@@ -75,6 +120,3 @@ Base URL is `http://<server_ip>:<port>/api`
 
 GET requests:
 `/get-voters` - returns previous epoch [UserListResponseItem[]](https://github.com/EclipsePad/eclipse-contracts-core/blob/main/scripts/src/interfaces/Voter.types.ts#L277)
-
-
-
