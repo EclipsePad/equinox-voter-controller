@@ -101,7 +101,7 @@ sudo crontab -e
 
 Add this line to restart the service every day at 8 pm UTC
 ```
-0 20 * * * /usr/bin/systemctl restart voter.service
+0 20 * * * /sbin/reboot
 ```
 
 Verify service status
