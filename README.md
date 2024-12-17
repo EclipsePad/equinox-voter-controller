@@ -7,7 +7,7 @@
 
 1) Connect to server over SSH
 ```
-ssh <username>@<server_ip>
+ssh root@<server_ip>
 ```
 
 2) Install required system updates and components
@@ -38,8 +38,7 @@ cd equinox-voter-controller && yarn
 5) Create env file and specify seed phrase for account sending messages to voter contract
 
 ```
-touch config.env
-chmod 600 ./config.env
+touch config.env && chmod 600 ./config.env
 nano ./config.env
 ```
 
@@ -47,7 +46,7 @@ Enter actual values (replace placeholders <_>)
 
 ```
 PORT=<port_number>
-SEED="<your_seed_phrase>"
+SEED=<your_seed_phrase>
 ```
 
 Save the file (Ctrl+X, then Y, then Enter)
@@ -71,7 +70,7 @@ Create a systemd service file for the application
 nano /etc/systemd/system/voter.service
 ```
 
-Add this content (replace placeholders <_>)
+Add this content
 ```
 [Unit]
 Description=Equinox Voter Controller
@@ -79,10 +78,10 @@ After=network.target
 
 [Service]
 Type=simple
-User=<username>
-WorkingDirectory=<path_to_the_project>
-ExecStart=/usr/bin/yarn run start
-Restart=on-failure
+User=root
+WorkingDirectory=/root/equinox-voter-controller
+ExecStart=/root/equinox-voter-controller/run.sh
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
@@ -110,14 +109,20 @@ Verify service status
 sudo systemctl status voter.service
 ```
 
-9) Run the server
+9) Run the service
 
 ```
-yarn run start
+systemctl daemon-reload
+systemctl restart voter.service
 ```
 
 Note: to find and kill uncompleted process use
 ```
+systemctl stop voter.service
+systemctl disable voter.service
+systemctl daemon-reload
+systemctl reset-failed
+
 sudo lsof -i :<port>
 kill -9 <PID>
 ```
