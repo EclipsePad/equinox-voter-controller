@@ -100,6 +100,7 @@ export interface StakingMsg {
   }: {
     paginationAmount?: number;
   }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  replenishBalance: (_funds?: Coin[]) => MsgExecuteContractEncodeObject;
   decreaseBalance: ({
     amount
   }: {
@@ -130,6 +131,7 @@ export class StakingMsgComposer implements StakingMsg {
     this.acceptAdminRole = this.acceptAdminRole.bind(this);
     this.updateConfig = this.updateConfig.bind(this);
     this.updatePaginationConfig = this.updatePaginationConfig.bind(this);
+    this.replenishBalance = this.replenishBalance.bind(this);
     this.decreaseBalance = this.decreaseBalance.bind(this);
     this.pause = this.pause.bind(this);
     this.unpause = this.unpause.bind(this);
@@ -445,6 +447,19 @@ export class StakingMsgComposer implements StakingMsg {
           update_pagination_config: {
             pagination_amount: paginationAmount
           }
+        })),
+        funds: _funds
+      })
+    };
+  };
+  replenishBalance = (_funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(JSON.stringify({
+          replenish_balance: {}
         })),
         funds: _funds
       })

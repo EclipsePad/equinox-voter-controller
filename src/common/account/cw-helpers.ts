@@ -250,6 +250,16 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
 
   // staking
 
+  async function cwQueryConfig(isDisplayed: boolean = false) {
+    const res = await stakingQueryClient.queryConfig();
+    return logAndReturn(res, isDisplayed);
+  }
+
+  async function cwQueryBalances(isDisplayed: boolean = false) {
+    const res = await stakingQueryClient.queryBalances();
+    return logAndReturn(res, isDisplayed);
+  }
+
   async function pQueryStakerList(
     maxPaginationAmount: number,
     maxCount: number = 0,
@@ -352,6 +362,8 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
 
   return {
     staking: {
+      cwQueryConfig,
+      cwQueryBalances,
       pQueryStakerList,
       pQueryLockerList,
     },

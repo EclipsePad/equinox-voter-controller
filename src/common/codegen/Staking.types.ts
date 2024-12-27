@@ -91,6 +91,8 @@ export type ExecuteMsg = {
     pagination_amount?: number | null;
   };
 } | {
+  replenish_balance: {};
+} | {
   decrease_balance: {
     amount: Uint128;
   };
@@ -198,8 +200,7 @@ export interface LockingAprItem {
   tier: number;
 }
 export interface QueryBalancesResponse {
-  rewards_pool: Uint128;
-  unclaimed: Uint128;
+  replenished: Uint128;
 }
 export type Uint64 = number;
 export interface Config {

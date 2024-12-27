@@ -396,6 +396,7 @@ export interface StakingInterface extends StakingReadOnlyInterface {
   }: {
     paginationAmount?: number;
   }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
+  replenishBalance: (fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
   decreaseBalance: ({
     amount
   }: {
@@ -429,6 +430,7 @@ export class StakingClient extends StakingQueryClient implements StakingInterfac
     this.acceptAdminRole = this.acceptAdminRole.bind(this);
     this.updateConfig = this.updateConfig.bind(this);
     this.updatePaginationConfig = this.updatePaginationConfig.bind(this);
+    this.replenishBalance = this.replenishBalance.bind(this);
     this.decreaseBalance = this.decreaseBalance.bind(this);
     this.pause = this.pause.bind(this);
     this.unpause = this.unpause.bind(this);
@@ -619,6 +621,11 @@ export class StakingClient extends StakingQueryClient implements StakingInterfac
       update_pagination_config: {
         pagination_amount: paginationAmount
       }
+    }, fee, memo, _funds);
+  };
+  replenishBalance = async (fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      replenish_balance: {}
     }, fee, memo, _funds);
   };
   decreaseBalance = async ({
