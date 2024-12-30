@@ -134,9 +134,9 @@ To update the codebase:
 ```
 systemctl stop voter.service && systemctl disable voter.service && systemctl daemon-reload && systemctl reset-failed
 ```
-3) Execute inside equinox-voter-controller directory
+3) Fetch updates
 ```
-git fetch origin && git reset --hard origin/main
+cd equinox-voter-controller && git fetch origin && git reset --hard origin/main
 ```
 4) Restart the service
 ```
