@@ -2,6 +2,19 @@ import { Coin } from "@cosmjs/stargate";
 import { Timestamp } from "cosmjs-types/google/protobuf/timestamp";
 import { Label, NetworkName, Wasm } from "../config";
 
+interface DistributedRewards {
+  staked: number;
+  locked: number;
+  claimedRewards: number;
+  unclaimedRewards: number;
+  distributedRewards: number;
+  replenished: number;
+  balance: number;
+  remainingRewards: number;
+  timeDays: number;
+  amountToReplensish: number;
+}
+
 interface AssetDescription {
   symbol: string;
   amount: number;
@@ -427,4 +440,5 @@ export {
   Offer,
   AssetDescription,
   PoolDatabase,
+  DistributedRewards,
 };

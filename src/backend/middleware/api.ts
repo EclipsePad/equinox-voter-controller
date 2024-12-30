@@ -6,17 +6,26 @@ import {
   StakerInfo,
 } from "../../common/codegen/Staking.types";
 import { readFile } from "fs/promises";
-import { ChainConfig } from "../../common/interfaces";
+import { ChainConfig, DistributedRewards } from "../../common/interfaces";
 import {
   getChainOptionById,
   getContractByLabel,
 } from "../../common/config/config-utils";
 import { getCwQueryHelpers } from "../../common/account/cw-helpers";
 import { getSgQueryHelpers } from "../../common/account/sg-helpers";
+import { floor } from "../../common/utils";
 
 const CHAIN_ID = "neutron-1";
+const REWARDS_DISTRIBUTION_PERIOD = 180; // days
+const REWARDS_REDUCTION_MULTIPLIER = 0.99;
+const SECONDS_PER_DAY = 24 * 3_600;
 
-async function getStakers() {
+// S = a * (1 - q^n) / (1 - q)
+function calcGeoProgSum(a: number, q: number, n: number): number {
+  return Math.ceil((a * (1 - q ** n)) / (1 - q));
+}
+
+async function getStakers(): Promise<[Addr, StakerInfo][]> {
   let stakers: [Addr, StakerInfo][] = [];
 
   try {
@@ -26,7 +35,7 @@ async function getStakers() {
   return stakers;
 }
 
-async function getLockers() {
+async function getLockers(): Promise<[Addr, LockerInfo[]][]> {
   let lockers: [Addr, LockerInfo[]][] = [];
 
   try {
@@ -36,7 +45,7 @@ async function getLockers() {
   return lockers;
 }
 
-async function getDistributedRewards() {
+async function getDistributedRewards(): Promise<DistributedRewards> {
   const configJsonStr = await readFile(PATH_TO_CONFIG_JSON, {
     encoding: ENCODING,
   });
@@ -64,6 +73,8 @@ async function getDistributedRewards() {
     (await getBalance(stakingAddress, eclipDenom)).amount
   );
   const replenished = Number((await staking.cwQueryBalances()).replenished);
+  const { eclip_per_second: eclipPerSecond } =
+    await staking.cwQueryRewardsReductionInfo();
 
   // read snapshots
   let stakers = await getStakers();
@@ -120,11 +131,21 @@ async function getDistributedRewards() {
   const distributedRewards = unclaimedRewards + claimedRewards;
 
   const remainingRewards = stakingBalance - staked - locked - unclaimedRewards;
-  const timeDays = Math.floor(
-    remainingRewards / config.eclip_per_second / (24 * 3_600)
+  const timeDays = floor(
+    remainingRewards / config.eclip_per_second / SECONDS_PER_DAY
   );
 
-  // TODO: add interface
+  // calc expected rewards to distribute for REWARDS_DISTRIBUTION_PERIOD
+  const weeks = floor(REWARDS_DISTRIBUTION_PERIOD / 7);
+  const firstDays = REWARDS_DISTRIBUTION_PERIOD - 7 * weeks;
+  const firstDaysRewards = Math.ceil(
+    eclipPerSecond * firstDays * SECONDS_PER_DAY
+  );
+  const firstWeekRewards = eclipPerSecond * 7 * SECONDS_PER_DAY;
+  const amountToReplensish =
+    firstDaysRewards +
+    calcGeoProgSum(firstWeekRewards, REWARDS_REDUCTION_MULTIPLIER, weeks);
+
   return {
     staked,
     locked,
@@ -135,10 +156,11 @@ async function getDistributedRewards() {
     balance: stakingBalance,
     remainingRewards,
     timeDays,
+    amountToReplensish,
   };
 }
 
-async function getVoters() {
+async function getVoters(): Promise<UserListResponseItem[]> {
   let voters: UserListResponseItem[] = [];
 
   try {
