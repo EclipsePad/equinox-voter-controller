@@ -19,6 +19,7 @@ const CHAIN_ID = "neutron-1";
 const REWARDS_DISTRIBUTION_PERIOD = 180; // days
 const REWARDS_REDUCTION_MULTIPLIER = 0.99;
 const SECONDS_PER_DAY = 24 * 3_600;
+const REPLENISHED_INITIALLY = 3_100_000 * 1e6;
 
 // S = a * (1 - q^n) / (1 - q)
 function calcGeoProgSum(a: number, q: number, n: number): number {
@@ -86,9 +87,13 @@ async function getDistributedRewards(): Promise<DistributedRewards> {
     const stakingBalance = Number(
       (await getBalance(stakingAddress, eclipDenom)).amount
     );
-    const replenished = Number((await staking.cwQueryBalances()).replenished);
     const { eclip_per_second: eclipPerSecond } =
       await staking.cwQueryRewardsReductionInfo();
+
+    let replenished = REPLENISHED_INITIALLY;
+    try {
+      replenished = Number((await staking.cwQueryBalances()).replenished);
+    } catch (_) {}
 
     // read snapshots
     let stakers = await getStakers();
@@ -159,7 +164,8 @@ async function getDistributedRewards(): Promise<DistributedRewards> {
     const firstWeekRewards = eclipPerSecond * 7 * SECONDS_PER_DAY;
     const amountToReplensish =
       firstDaysRewards +
-      calcGeoProgSum(firstWeekRewards, REWARDS_REDUCTION_MULTIPLIER, weeks);
+      calcGeoProgSum(firstWeekRewards, REWARDS_REDUCTION_MULTIPLIER, weeks) -
+      remainingRewards;
 
     distributedRewardsResponse = {
       staked,
@@ -173,9 +179,7 @@ async function getDistributedRewards(): Promise<DistributedRewards> {
       timeDays,
       amountToReplensish,
     };
-  } catch (e) {
-    l(e);
-  }
+  } catch (_) {}
 
   return distributedRewardsResponse;
 }
