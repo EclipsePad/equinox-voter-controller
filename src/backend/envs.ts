@@ -15,4 +15,5 @@ const e = process.env as { [key: string]: string };
 
 export const IS_PRODUCTION = e.IS_PRODUCTION === "true",
   PORT = e.PORT,
-  SEED = e.SEED;
+  SEED = e.SEED,
+  BASE_URL = e.BASE_URL;

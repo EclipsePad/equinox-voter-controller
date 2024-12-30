@@ -84,10 +84,14 @@ app.listen(PORT, async () => {
 
   // service to make vaults snapshots
   setInterval(async () => {
-    const stakers = await staking.pQueryStakerList(STAKING.PAGINATION_AMOUNT);
-    const lockers = await staking.pQueryLockerList(STAKING.PAGINATION_AMOUNT);
-    await writeSnapshot("stakers", stakers);
-    await writeSnapshot("lockers", lockers);
+    try {
+      const stakers = await staking.pQueryStakerList(STAKING.PAGINATION_AMOUNT);
+      const lockers = await staking.pQueryLockerList(STAKING.PAGINATION_AMOUNT);
+      await writeSnapshot("stakers", stakers);
+      await writeSnapshot("lockers", lockers);
+    } catch (error) {
+      l(error);
+    }
   }, STAKING.SNAPSHOT_PERIOD * 1e3);
 
   // service to update voter state and make voters snapshots

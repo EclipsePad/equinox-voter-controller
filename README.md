@@ -45,8 +45,9 @@ nano ./config.env
 Enter actual values (replace placeholders <_>)
 
 ```
-PORT=<port_number>
+PORT=<port>
 SEED=<your_seed_phrase>
+BASE_URL=http://<server_ip>:<port>
 ```
 
 Save the file (Ctrl+X, then Y, then Enter)
@@ -111,17 +112,15 @@ sudo systemctl status voter.service
 
 9) Run the service
 ```
-systemctl daemon-reload
-systemctl restart voter.service
+systemctl daemon-reload && systemctl restart voter.service
 ```
 
 10) Note: to find and kill uncompleted process use
 ```
-systemctl stop voter.service
-systemctl disable voter.service
-systemctl daemon-reload
-systemctl reset-failed
-
+systemctl stop voter.service && systemctl disable voter.service && systemctl daemon-reload && systemctl reset-failed
+```
+Optionally
+```
 sudo lsof -i :<port>
 kill -9 <PID>
 ```
@@ -134,8 +133,8 @@ To update the codebase:
 2) Stop the service (step 10 of settings)
 3) Execute inside equinox-voter-controller directory
 ```
-git restore ./src/backend/services/snapshots/voters.json
-git pull origin main
+git fetch origin
+git reset --hard origin/main
 ```
 4) Restart the service (step 9 of settings)
 
