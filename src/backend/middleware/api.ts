@@ -26,7 +26,7 @@ function calcGeoProgSum(a: number, q: number, n: number): number {
   return Math.ceil((a * (1 - q ** n)) / (1 - q));
 }
 
-async function getStakers(): Promise<[Addr, StakerInfo][]> {
+export async function getStakers(): Promise<[Addr, StakerInfo][]> {
   let stakers: [Addr, StakerInfo][] = [];
 
   try {
@@ -36,7 +36,7 @@ async function getStakers(): Promise<[Addr, StakerInfo][]> {
   return stakers;
 }
 
-async function getLockers(): Promise<[Addr, LockerInfo[]][]> {
+export async function getLockers(): Promise<[Addr, LockerInfo[]][]> {
   let lockers: [Addr, LockerInfo[]][] = [];
 
   try {
@@ -46,7 +46,7 @@ async function getLockers(): Promise<[Addr, LockerInfo[]][]> {
   return lockers;
 }
 
-async function getDistributedRewards(): Promise<DistributedRewards> {
+export async function getDistributedRewards(): Promise<DistributedRewards> {
   let distributedRewardsResponse: DistributedRewards = {
     staked: 0,
     locked: 0,
@@ -184,7 +184,7 @@ async function getDistributedRewards(): Promise<DistributedRewards> {
   return distributedRewardsResponse;
 }
 
-async function getVoters(): Promise<UserListResponseItem[]> {
+export async function getVoters(): Promise<UserListResponseItem[]> {
   let voters: UserListResponseItem[] = [];
 
   try {
@@ -193,5 +193,3 @@ async function getVoters(): Promise<UserListResponseItem[]> {
 
   return voters;
 }
-
-export { getStakers, getLockers, getDistributedRewards, getVoters };

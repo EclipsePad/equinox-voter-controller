@@ -11,7 +11,8 @@
     "call": "ts-node ./src/backend/services/call-contract.ts",
     "json": "ts-node ./src/backend/services/generate-json.ts",
     "start": "ts-node --project ./src/backend/tsconfig.json ./src/backend/index.ts",
-    "dev": "cross-env NODE_ENV=development nodemon"
+    "dev": "cross-env NODE_ENV=development nodemon",
+    "capture": "ts-node ./src/backend/services/capture.ts"
   },
   "repository": {
     "type": "git",
