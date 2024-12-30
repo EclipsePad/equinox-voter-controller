@@ -145,7 +145,11 @@ git pull origin main
 Base URL is `http://<server_ip>:<port>/api`
 
 GET requests:
+
 `/get-stakers` - returns actual (captured in [SNAPSHOT_PERIOD](https://github.com/EclipsePad/equinox-voter-controller/blob/main/src/backend/index.ts#L23) ago) staker address and info list [[Addr, StakerInfo][]](https://github.com/EclipsePad/equinox-voter-controller/blob/main/src/common/codegen/Staking.types.ts#L266)
+
 `/get-lockers` - returns actual (captured in [SNAPSHOT_PERIOD](https://github.com/EclipsePad/equinox-voter-controller/blob/main/src/backend/index.ts#L23) ago) locker address and info list [[Addr, LockerInfo[]][]](https://github.com/EclipsePad/equinox-voter-controller/blob/main/src/common/codegen/Staking.types.ts#L232)
+
 `/get-distributed-rewards` - returns actual (captured in [SNAPSHOT_PERIOD](https://github.com/EclipsePad/equinox-voter-controller/blob/main/src/backend/index.ts#L23) ago) info about distributed and recommended to replenish ECLIP rewards for staking contract [DistributedRewards](https://github.com/EclipsePad/equinox-voter-controller/blob/main/src/common/interfaces/index.ts#L5)
+
 `/get-voters` - returns previous epoch [UserListResponseItem[]](https://github.com/EclipsePad/eclipse-contracts-core/blob/main/scripts/src/interfaces/Voter.types.ts#L277)
