@@ -129,14 +129,19 @@ kill -9 <PID>
 
 To update the codebase:
 
-1) Get actual voters snapshot via `/get-voters` and push to main branch
-2) Stop the service (step 10 of settings)
+1) Update snapshots, commit and push changes via `./capture.sh` locally 
+2) Stop the service
+```
+systemctl stop voter.service && systemctl disable voter.service && systemctl daemon-reload && systemctl reset-failed
+```
 3) Execute inside equinox-voter-controller directory
 ```
-git fetch origin
-git reset --hard origin/main
+git fetch origin && git reset --hard origin/main
 ```
-4) Restart the service (step 9 of settings)
+4) Restart the service
+```
+systemctl daemon-reload && systemctl restart voter.service
+```
 
 
 ## REST API
