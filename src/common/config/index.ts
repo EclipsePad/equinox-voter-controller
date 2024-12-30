@@ -1,10 +1,9 @@
 import { ChainConfig } from "../../common/interfaces";
 import { $, toJson } from "./config-utils";
-import * as VoterTypes from "../codegen/Voter.types";
 
 export type NetworkName = "NEUTRON";
-export type Wasm = "voter.wasm";
-export type Label = "voter";
+export type Wasm = "staking.wasm" | "voter.wasm";
+export type Label = "staking" | "voter";
 
 export const ADDRESS = {
   WORKER: "",
@@ -31,6 +30,17 @@ export const CHAIN_CONFIG: ChainConfig = {
           GAS_PRICE_AMOUNT: 0.0053,
           STORE_CODE_GAS_MULTIPLIER: 21.5,
           CONTRACTS: [
+            {
+              WASM: "staking.wasm",
+              LABEL: "staking",
+              INIT_MSG: toJson({}),
+              MIGRATE_MSG: toJson({}),
+              UPDATE_MSG: toJson({}),
+              CODE: 0,
+              ADDRESS:
+                "neutron19q93n64nyet24ynvw04qjqmejffkmyxakdvl08sf3n3yeyr92lrs2makhx",
+            },
+
             {
               WASM: "voter.wasm",
               LABEL: "voter",

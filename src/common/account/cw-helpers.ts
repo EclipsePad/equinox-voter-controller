@@ -1,3 +1,5 @@
+import { StakingMsgComposer } from "../codegen/Staking.message-composer";
+import { StakingQueryClient } from "../codegen/Staking.client";
 import { VoterMsgComposer } from "../codegen/Voter.message-composer";
 import { VoterQueryClient } from "../codegen/Voter.client";
 
@@ -44,6 +46,7 @@ import {
   OwnerOfResponse,
 } from "../interfaces";
 import { UserListResponse, UserListResponseItem } from "../codegen/Voter.types";
+import { Addr, LockerInfo, StakerInfo } from "../codegen/Staking.types";
 
 function addSingleTokenToComposerObj(
   obj: MsgExecuteContractEncodeObject,
@@ -104,7 +107,14 @@ function getSingleTokenExecMsg(
 }
 
 function getContracts(contracts: ContractInfo[]) {
+  let STAKING_CONTRACT: ContractInfo | undefined;
   let VOTER_CONTRACT: ContractInfo | undefined;
+
+  try {
+    STAKING_CONTRACT = getContractByLabel(contracts, "staking");
+  } catch (error) {
+    l(error);
+  }
 
   try {
     VOTER_CONTRACT = getContractByLabel(contracts, "voter");
@@ -113,6 +123,7 @@ function getContracts(contracts: ContractInfo[]) {
   }
 
   return {
+    STAKING_CONTRACT,
     VOTER_CONTRACT,
   };
 }
@@ -220,17 +231,101 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
     OPTION: { CONTRACTS },
   } = getChainOptionById(CHAIN_CONFIG, chainId);
 
-  const { VOTER_CONTRACT } = getContracts(CONTRACTS);
+  const { STAKING_CONTRACT, VOTER_CONTRACT } = getContracts(CONTRACTS);
 
   const cwClient = await getCwClient(rpc);
   if (!cwClient) throw new Error("cwClient is not found!");
 
   const cosmwasmQueryClient: CosmWasmClient = cwClient.client;
 
+  const stakingQueryClient = new StakingQueryClient(
+    cosmwasmQueryClient,
+    STAKING_CONTRACT?.ADDRESS || ""
+  );
+
   const voterQueryClient = new VoterQueryClient(
     cosmwasmQueryClient,
     VOTER_CONTRACT?.ADDRESS || ""
   );
+
+  // staking
+
+  async function cwQueryConfig(isDisplayed: boolean = false) {
+    const res = await stakingQueryClient.queryConfig();
+    return logAndReturn(res, isDisplayed);
+  }
+
+  async function cwQueryBalances(isDisplayed: boolean = false) {
+    const res = await stakingQueryClient.queryBalances();
+    return logAndReturn(res, isDisplayed);
+  }
+
+  async function cwQueryRewardsReductionInfo(isDisplayed: boolean = false) {
+    const res = await stakingQueryClient.queryRewardsReductionInfo();
+    return logAndReturn(res, isDisplayed);
+  }
+
+  async function pQueryStakerList(
+    maxPaginationAmount: number,
+    maxCount: number = 0,
+    isDisplayed: boolean = false
+  ): Promise<[Addr, StakerInfo][]> {
+    const paginationAmount = getPaginationAmount(maxPaginationAmount, maxCount);
+
+    let allItems: [Addr, StakerInfo][] = [];
+    let lastItem: string | undefined = undefined;
+    let count: number = 0;
+
+    while (lastItem !== "" && count < (maxCount || count + 1)) {
+      const stakerListResponse: [Addr, StakerInfo][] =
+        await stakingQueryClient.queryStakerInfoList({
+          amount: paginationAmount,
+          startFrom: lastItem,
+        });
+
+      lastItem = getLast(stakerListResponse)?.[0] || "";
+      allItems = [...allItems, ...stakerListResponse];
+      count += stakerListResponse.length;
+      l({ count });
+    }
+
+    if (maxCount) {
+      allItems = allItems.slice(0, maxCount);
+    }
+
+    return logAndReturn(allItems, isDisplayed);
+  }
+
+  async function pQueryLockerList(
+    maxPaginationAmount: number,
+    maxCount: number = 0,
+    isDisplayed: boolean = false
+  ): Promise<[Addr, LockerInfo[]][]> {
+    const paginationAmount = getPaginationAmount(maxPaginationAmount, maxCount);
+
+    let allItems: [Addr, LockerInfo[]][] = [];
+    let lastItem: string | undefined = undefined;
+    let count: number = 0;
+
+    while (lastItem !== "" && count < (maxCount || count + 1)) {
+      const lockerListResponse: [Addr, LockerInfo[]][] =
+        await stakingQueryClient.queryLockerInfoList({
+          amount: paginationAmount,
+          startFrom: lastItem,
+        });
+
+      lastItem = getLast(lockerListResponse)?.[0] || "";
+      allItems = [...allItems, ...lockerListResponse];
+      count += lockerListResponse.length;
+      l({ count });
+    }
+
+    if (maxCount) {
+      allItems = allItems.slice(0, maxCount);
+    }
+
+    return logAndReturn(allItems, isDisplayed);
+  }
 
   // voter
 
@@ -271,6 +366,13 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
   }
 
   return {
+    staking: {
+      cwQueryConfig,
+      cwQueryBalances,
+      cwQueryRewardsReductionInfo,
+      pQueryStakerList,
+      pQueryLockerList,
+    },
     voter: {
       cwQueryOperationStatus,
       pQueryUserList,

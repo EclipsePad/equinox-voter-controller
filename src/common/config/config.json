@@ -15,6 +15,15 @@
           "STORE_CODE_GAS_MULTIPLIER": 21.5,
           "CONTRACTS": [
             {
+              "WASM": "staking.wasm",
+              "LABEL": "staking",
+              "INIT_MSG": "{}",
+              "MIGRATE_MSG": "{}",
+              "UPDATE_MSG": "{}",
+              "CODE": 0,
+              "ADDRESS": "neutron19q93n64nyet24ynvw04qjqmejffkmyxakdvl08sf3n3yeyr92lrs2makhx"
+            },
+            {
               "WASM": "voter.wasm",
               "LABEL": "voter",
               "INIT_MSG": "{}",

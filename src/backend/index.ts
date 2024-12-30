@@ -17,9 +17,17 @@ import {
 } from "../common/account/cw-helpers";
 
 const CHAIN_ID = "neutron-1";
-const PAGINATION_AMOUNT = 15;
-const PUSH_PERIOD = 60; // seconds
-const SETTLE_PERIOD = 10; // seconds
+
+const STAKING = {
+  PAGINATION_AMOUNT: 100,
+  SNAPSHOT_PERIOD: 3_600, // seconds
+};
+
+const VOTER = {
+  PAGINATION_AMOUNT: 15,
+  PUSH_PERIOD: 60, // seconds
+  SETTLE_PERIOD: 10, // seconds
+};
 
 const limiter = rateLimit({
   windowMs: 60 * 1e3, // 1 minute
@@ -68,19 +76,28 @@ app.listen(PORT, async () => {
 
   const gasPrice = `${GAS_PRICE_AMOUNT}${DENOM}`;
   const { signer, owner } = await getSigner(PREFIX, SEED);
-  const { voter } = await getCwQueryHelpers(CHAIN_ID, RPC);
+  const { staking, voter } = await getCwQueryHelpers(CHAIN_ID, RPC);
   const h = await getCwExecHelpers(CHAIN_ID, RPC, owner, signer);
 
   console.clear();
   l(`\n✔️ Server is running on PORT: ${PORT}`);
 
+  // service to make vaults snapshots
+  setInterval(async () => {
+    const stakers = await staking.pQueryStakerList(STAKING.PAGINATION_AMOUNT);
+    const lockers = await staking.pQueryLockerList(STAKING.PAGINATION_AMOUNT);
+    await writeSnapshot("stakers", stakers);
+    await writeSnapshot("lockers", lockers);
+  }, STAKING.SNAPSHOT_PERIOD * 1e3);
+
+  // service to update voter state and make voters snapshots
   let isSnapshotUpdated = false;
   while (true) {
-    // try push every minute
-    await wait(PUSH_PERIOD * 1e3);
+    // try push
+    await wait(VOTER.PUSH_PERIOD * 1e3);
     try {
       await h.voter.cwPushByAdmin(gasPrice);
-      await wait(SETTLE_PERIOD * 1e3);
+      await wait(VOTER.SETTLE_PERIOD * 1e3);
     } catch (error) {
       l(error);
     }
@@ -91,7 +108,7 @@ app.listen(PORT, async () => {
 
       // make snapshot single time when votes will be applied
       if (!isSnapshotUpdated && rewards_claim_stage === "unclaimed") {
-        const users = await voter.pQueryUserList(PAGINATION_AMOUNT);
+        const users = await voter.pQueryUserList(VOTER.PAGINATION_AMOUNT);
         await writeSnapshot("voters", users);
         isSnapshotUpdated = true;
       }
