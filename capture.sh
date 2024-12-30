@@ -1,15 +1,18 @@
 #!/bin/bash
 
+# update snapshots
 yarn run capture
 
+# commit changes in dev branch
 git add .
-git commit -m "update snapshots"
+git commit -m "updated snapshots"
 git push origin dev
 
-pr_url=$(gh pr create \
-    --base main \
-    --head dev \
-    --title "update snapshots" \
-    --fill)
+# switch to main branch and merge
+git checkout main
+git pull origin main
+git merge dev
+git push origin main
 
-gh pr merge "$pr_url" --merge
+# return to dev branch
+git checkout dev
