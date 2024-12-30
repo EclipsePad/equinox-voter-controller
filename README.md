@@ -110,13 +110,12 @@ sudo systemctl status voter.service
 ```
 
 9) Run the service
-
 ```
 systemctl daemon-reload
 systemctl restart voter.service
 ```
 
-Note: to find and kill uncompleted process use
+10) Note: to find and kill uncompleted process use
 ```
 systemctl stop voter.service
 systemctl disable voter.service
@@ -127,13 +126,26 @@ sudo lsof -i :<port>
 kill -9 <PID>
 ```
 
+### Updating the Codebase
+
+To update the codebase:
+
+1) Get actual voters snapshot via `/get-voters` and push to main branch
+2) Stop the service (step 10 of settings)
+3) Execute inside equinox-voter-controller directory
+```
+git restore ./src/backend/services/snapshots/voters.json
+git pull origin main
+```
+4) Restart the service (step 9 of settings)
+
 
 ## REST API
 
 Base URL is `http://<server_ip>:<port>/api`
 
 GET requests:
-`/get-stakers` - returns actual (captured in [SNAPSHOT_PERIOD](https://github.com/EclipsePad/equinox-voter-controller/blob/dev/src/backend/index.ts#L23) ago) staker address and info list [[Addr, StakerInfo][]](https://github.com/EclipsePad/equinox-voter-controller/blob/dev/src/common/codegen/Staking.types.ts#L266)
-`/get-lockers` - returns actual (captured in [SNAPSHOT_PERIOD](https://github.com/EclipsePad/equinox-voter-controller/blob/dev/src/backend/index.ts#L23) ago) locker address and info list [[Addr, LockerInfo[]][]](https://github.com/EclipsePad/equinox-voter-controller/blob/dev/src/common/codegen/Staking.types.ts#L232)
-`/get-distributed-rewards` - returns actual (captured in [SNAPSHOT_PERIOD](https://github.com/EclipsePad/equinox-voter-controller/blob/dev/src/backend/index.ts#L23) ago) info about distributed and recommended to replenish ECLIP rewards for staking contract [DistributedRewards](https://github.com/EclipsePad/equinox-voter-controller/blob/dev/src/common/interfaces/index.ts#L4)
+`/get-stakers` - returns actual (captured in [SNAPSHOT_PERIOD](https://github.com/EclipsePad/equinox-voter-controller/blob/main/src/backend/index.ts#L23) ago) staker address and info list [[Addr, StakerInfo][]](https://github.com/EclipsePad/equinox-voter-controller/blob/main/src/common/codegen/Staking.types.ts#L266)
+`/get-lockers` - returns actual (captured in [SNAPSHOT_PERIOD](https://github.com/EclipsePad/equinox-voter-controller/blob/main/src/backend/index.ts#L23) ago) locker address and info list [[Addr, LockerInfo[]][]](https://github.com/EclipsePad/equinox-voter-controller/blob/main/src/common/codegen/Staking.types.ts#L232)
+`/get-distributed-rewards` - returns actual (captured in [SNAPSHOT_PERIOD](https://github.com/EclipsePad/equinox-voter-controller/blob/main/src/backend/index.ts#L23) ago) info about distributed and recommended to replenish ECLIP rewards for staking contract [DistributedRewards](https://github.com/EclipsePad/equinox-voter-controller/blob/main/src/common/interfaces/index.ts#L5)
 `/get-voters` - returns previous epoch [UserListResponseItem[]](https://github.com/EclipsePad/eclipse-contracts-core/blob/main/scripts/src/interfaces/Voter.types.ts#L277)
