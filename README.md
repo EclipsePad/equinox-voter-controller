@@ -112,17 +112,17 @@ sudo systemctl status voter.service
 
 9) Run the service
 ```
-systemctl daemon-reload && systemctl restart voter.service
+sudo systemctl daemon-reload && sudo systemctl restart voter.service
 ```
 
 10) Note: to find and kill uncompleted process use
 ```
-systemctl stop voter.service && systemctl disable voter.service && systemctl daemon-reload && systemctl reset-failed
+sudo systemctl stop voter.service && sudo systemctl disable voter.service && sudo systemctl daemon-reload && sudo systemctl reset-failed
 ```
 Optionally
 ```
 sudo lsof -i :<port>
-kill -9 <PID>
+sudo kill -9 <PID>
 ```
 
 ### Updating the Codebase
@@ -132,7 +132,7 @@ To update the codebase:
 1) Update snapshots, commit and push changes via `./capture.sh` locally 
 2) Stop the service
 ```
-systemctl stop voter.service && systemctl disable voter.service && systemctl daemon-reload && systemctl reset-failed
+sudo systemctl stop voter.service && sudo systemctl disable voter.service && sudo systemctl daemon-reload && sudo systemctl reset-failed
 ```
 3) Fetch updates
 ```
@@ -140,7 +140,7 @@ cd equinox-voter-controller && git fetch origin && git reset --hard origin/main
 ```
 4) Restart the service
 ```
-systemctl daemon-reload && systemctl restart voter.service
+sudo systemctl daemon-reload && sudo systemctl enable voter.service && sudo systemctl restart voter.service
 ```
 
 
