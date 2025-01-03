@@ -167,4 +167,4 @@ GET requests:
 `/get-voters` - returns previous epoch [UserListResponseItem[]](https://github.com/EclipsePad/eclipse-contracts-core/blob/main/scripts/src/interfaces/Voter.types.ts#L277)
 
 
-<a id="snapshot-period"></a> *[SNAPSHOT_PERIOD](https://github.com/EclipsePad/equinox-voter-controller/blob/main/src/backend/index.ts#L23)
+<a id="snapshot-period"></a> *[SNAPSHOT_PERIOD](https://github.com/EclipsePad/equinox-voter-controller/blob/main/src/backend/constants.ts#L10)
