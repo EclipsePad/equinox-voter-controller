@@ -20,7 +20,7 @@ const CHAIN_ID = "neutron-1";
 
 const STAKING = {
   PAGINATION_AMOUNT: 100,
-  SNAPSHOT_PERIOD: 3_600, // seconds
+  SNAPSHOT_PERIOD: 30 * 60, // seconds
 };
 
 const VOTER = {

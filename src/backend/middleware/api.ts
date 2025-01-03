@@ -57,7 +57,7 @@ export async function getDistributedRewards(): Promise<DistributedRewards> {
     balance: 0,
     remainingRewards: 0,
     timeDays: 0,
-    amountToReplensish: 0,
+    amountToReplenish: 0,
   };
 
   try {
@@ -162,7 +162,7 @@ export async function getDistributedRewards(): Promise<DistributedRewards> {
       eclipPerSecond * firstDays * SECONDS_PER_DAY
     );
     const firstWeekRewards = eclipPerSecond * 7 * SECONDS_PER_DAY;
-    const amountToReplensish =
+    const amountToReplenish =
       firstDaysRewards +
       calcGeoProgSum(firstWeekRewards, REWARDS_REDUCTION_MULTIPLIER, weeks) -
       remainingRewards;
@@ -177,7 +177,7 @@ export async function getDistributedRewards(): Promise<DistributedRewards> {
       balance: stakingBalance,
       remainingRewards,
       timeDays,
-      amountToReplensish,
+      amountToReplenish,
     };
   } catch (_) {}
 
