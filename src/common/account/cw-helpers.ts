@@ -1,10 +1,9 @@
-import { StakingMsgComposer } from "../codegen/Staking.message-composer";
 import { StakingQueryClient } from "../codegen/Staking.client";
 import { VoterMsgComposer } from "../codegen/Voter.message-composer";
 import { VoterQueryClient } from "../codegen/Voter.client";
 
 import CONFIG_JSON from "../config/config.json";
-import { getLast, getPaginationAmount, l, li, logAndReturn } from "../utils";
+import { getLast, getPaginationAmount, l, logAndReturn } from "../utils";
 import { toBase64, fromUtf8, toUtf8 } from "@cosmjs/encoding";
 import {
   MsgMigrateContract,
@@ -34,19 +33,14 @@ import {
   TokenUnverified,
   ChainConfig,
   ContractInfo,
-  QueryAllOperatorsResponse,
-  QueryAllOperatorsMsg,
-  ApproveAllMsg,
-  RevokeAllMsg,
-  QueryApprovalsMsg,
-  ApprovalsResponse,
-  QueryTokens,
-  TokensResponse,
-  QueryOwnerOf,
-  OwnerOfResponse,
 } from "../interfaces";
 import { UserListResponse, UserListResponseItem } from "../codegen/Voter.types";
-import { Addr, LockerInfo, StakerInfo } from "../codegen/Staking.types";
+import {
+  Addr,
+  LockerInfo,
+  QueryEssenceListResponseItem,
+  StakerInfo,
+} from "../codegen/Staking.types";
 
 function addSingleTokenToComposerObj(
   obj: MsgExecuteContractEncodeObject,
@@ -327,6 +321,70 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
     return logAndReturn(allItems, isDisplayed);
   }
 
+  async function pQueryStakingEssenceList(
+    blockTime: number,
+    maxPaginationAmount: number,
+    maxCount: number = 0,
+    isDisplayed: boolean = false
+  ): Promise<QueryEssenceListResponseItem[]> {
+    const paginationAmount = getPaginationAmount(maxPaginationAmount, maxCount);
+
+    let allItems: QueryEssenceListResponseItem[] = [];
+    let lastItem: string | undefined = undefined;
+    let count: number = 0;
+
+    while (lastItem !== "" && count < (maxCount || count + 1)) {
+      const stakingEssenceList: QueryEssenceListResponseItem[] =
+        await stakingQueryClient.queryStakingEssenceList({
+          blockTime,
+          amount: paginationAmount,
+          startFrom: lastItem,
+        });
+
+      lastItem = getLast(stakingEssenceList)?.user || "";
+      allItems = [...allItems, ...stakingEssenceList];
+      count += stakingEssenceList.length;
+      l({ count });
+    }
+
+    if (maxCount) {
+      allItems = allItems.slice(0, maxCount);
+    }
+
+    return logAndReturn(allItems, isDisplayed);
+  }
+
+  async function pQueryLockingEssenceList(
+    maxPaginationAmount: number,
+    maxCount: number = 0,
+    isDisplayed: boolean = false
+  ): Promise<QueryEssenceListResponseItem[]> {
+    const paginationAmount = getPaginationAmount(maxPaginationAmount, maxCount);
+
+    let allItems: QueryEssenceListResponseItem[] = [];
+    let lastItem: string | undefined = undefined;
+    let count: number = 0;
+
+    while (lastItem !== "" && count < (maxCount || count + 1)) {
+      const lockingEssenceList: QueryEssenceListResponseItem[] =
+        await stakingQueryClient.queryLockingEssenceList({
+          amount: paginationAmount,
+          startFrom: lastItem,
+        });
+
+      lastItem = getLast(lockingEssenceList)?.user || "";
+      allItems = [...allItems, ...lockingEssenceList];
+      count += lockingEssenceList.length;
+      l({ count });
+    }
+
+    if (maxCount) {
+      allItems = allItems.slice(0, maxCount);
+    }
+
+    return logAndReturn(allItems, isDisplayed);
+  }
+
   // voter
 
   async function cwQueryOperationStatus(isDisplayed: boolean = false) {
@@ -372,6 +430,8 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
       cwQueryRewardsReductionInfo,
       pQueryStakerList,
       pQueryLockerList,
+      pQueryStakingEssenceList,
+      pQueryLockingEssenceList,
     },
     voter: {
       cwQueryOperationStatus,

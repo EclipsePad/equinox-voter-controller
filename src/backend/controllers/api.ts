@@ -3,6 +3,9 @@ import {
   getStakers as _getStakers,
   getLockers as _getLockers,
   getDistributedRewards as _getDistributedRewards,
+  getStakingEssence as _getStakingEssence,
+  getLockingEssence as _getLockingEssence,
+  getEssence as _getEssence,
   getVoters as _getVoters,
 } from "../middleware/api";
 
@@ -18,6 +21,21 @@ export async function getLockers(_req: Request, res: Response) {
 
 export async function getDistributedRewards(_req: Request, res: Response) {
   const data = await _getDistributedRewards();
+  res.json(data);
+}
+
+export async function getStakingEssence(_req: Request, res: Response) {
+  const data = await _getStakingEssence();
+  res.json(data);
+}
+
+export async function getLockingEssence(_req: Request, res: Response) {
+  const data = await _getLockingEssence();
+  res.json(data);
+}
+
+export async function getEssence(_req: Request, res: Response) {
+  const data = await _getEssence();
   res.json(data);
 }
 

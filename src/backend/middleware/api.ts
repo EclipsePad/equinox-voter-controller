@@ -1,25 +1,28 @@
 import { ENCODING, PATH_TO_CONFIG_JSON, readSnapshot } from "../services/utils";
 import { UserListResponseItem } from "../../common/codegen/Voter.types";
-import {
-  Addr,
-  LockerInfo,
-  StakerInfo,
-} from "../../common/codegen/Staking.types";
 import { readFile } from "fs/promises";
 import { ChainConfig, DistributedRewards } from "../../common/interfaces";
+import { getCwQueryHelpers } from "../../common/account/cw-helpers";
+import { getSgQueryHelpers } from "../../common/account/sg-helpers";
+import { floor } from "../../common/utils";
 import {
   getChainOptionById,
   getContractByLabel,
 } from "../../common/config/config-utils";
-import { getCwQueryHelpers } from "../../common/account/cw-helpers";
-import { getSgQueryHelpers } from "../../common/account/sg-helpers";
-import { floor, l } from "../../common/utils";
-
-const CHAIN_ID = "neutron-1";
-const REWARDS_DISTRIBUTION_PERIOD = 180; // days
-const REWARDS_REDUCTION_MULTIPLIER = 0.99;
-const SECONDS_PER_DAY = 24 * 3_600;
-const REPLENISHED_INITIALLY = 3_100_000 * 1e6;
+import {
+  Addr,
+  LockerInfo,
+  QueryEssenceListResponseItem,
+  StakerInfo,
+} from "../../common/codegen/Staking.types";
+import {
+  CHAIN_ID,
+  REPLENISHED_INITIALLY,
+  REWARDS_DISTRIBUTION_PERIOD,
+  REWARDS_REDUCTION_MULTIPLIER,
+  SECONDS_PER_DAY,
+  SNAPSHOT,
+} from "../constants";
 
 // S = a * (1 - q^n) / (1 - q)
 function calcGeoProgSum(a: number, q: number, n: number): number {
@@ -30,7 +33,7 @@ export async function getStakers(): Promise<[Addr, StakerInfo][]> {
   let stakers: [Addr, StakerInfo][] = [];
 
   try {
-    stakers = await readSnapshot("stakers", []);
+    stakers = await readSnapshot(SNAPSHOT.STAKERS, []);
   } catch (_) {}
 
   return stakers;
@@ -40,10 +43,34 @@ export async function getLockers(): Promise<[Addr, LockerInfo[]][]> {
   let lockers: [Addr, LockerInfo[]][] = [];
 
   try {
-    lockers = await readSnapshot("lockers", []);
+    lockers = await readSnapshot(SNAPSHOT.LOCKERS, []);
   } catch (_) {}
 
   return lockers;
+}
+
+export async function getStakingEssence(): Promise<
+  QueryEssenceListResponseItem[]
+> {
+  let stakingEssence: QueryEssenceListResponseItem[] = [];
+
+  try {
+    stakingEssence = await readSnapshot(SNAPSHOT.STAKING_ESSENCE, []);
+  } catch (_) {}
+
+  return stakingEssence;
+}
+
+export async function getLockingEssence(): Promise<
+  QueryEssenceListResponseItem[]
+> {
+  let lockingEssence: QueryEssenceListResponseItem[] = [];
+
+  try {
+    lockingEssence = await readSnapshot(SNAPSHOT.LOCKING_ESSENCE, []);
+  } catch (_) {}
+
+  return lockingEssence;
 }
 
 export async function getDistributedRewards(): Promise<DistributedRewards> {
@@ -66,10 +93,8 @@ export async function getDistributedRewards(): Promise<DistributedRewards> {
     });
     const CHAIN_CONFIG: ChainConfig = JSON.parse(configJsonStr);
     const {
-      PREFIX,
       OPTION: {
         RPC_LIST: [RPC],
-        DENOM,
         CONTRACTS,
       },
     } = getChainOptionById(CHAIN_CONFIG, CHAIN_ID);
@@ -184,11 +209,55 @@ export async function getDistributedRewards(): Promise<DistributedRewards> {
   return distributedRewardsResponse;
 }
 
+export async function getEssence(): Promise<string> {
+  let file: string = "wallets,essence\n";
+
+  try {
+    // read snapshots
+    const stakingData = await getStakingEssence();
+    const lockingData = await getLockingEssence();
+
+    // merge and remove duplications
+    const addressList = Array.from(
+      new Set([
+        ...stakingData.map((x) => x.user),
+        ...lockingData.map((x) => x.user),
+      ])
+    );
+
+    // calc essence
+    let finalList: [string, number][] = [];
+
+    for (const address of addressList) {
+      const stakingEssence = Number(
+        stakingData.find((x) => x.user === address)?.essence || ""
+      );
+      const lockingEssence = Number(
+        lockingData.find((x) => x.user === address)?.essence || ""
+      );
+      const essence = stakingEssence + lockingEssence;
+
+      if (!essence) continue;
+      finalList.push([address, essence]);
+    }
+
+    finalList.sort(
+      ([_addressA, essenceA], [_addressB, essenceB]) => essenceB - essenceA
+    );
+
+    file = finalList
+      .reduce((acc, [wallet, essence]) => acc + `${wallet},${essence}\n`, file)
+      .trim();
+  } catch (_) {}
+
+  return file;
+}
+
 export async function getVoters(): Promise<UserListResponseItem[]> {
   let voters: UserListResponseItem[] = [];
 
   try {
-    voters = await readSnapshot("voters", []);
+    voters = await readSnapshot(SNAPSHOT.VOTERS, []);
   } catch (_) {}
 
   return voters;
