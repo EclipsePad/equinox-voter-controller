@@ -1,10 +1,10 @@
-import { ENCODING, PATH_TO_CONFIG_JSON, readSnapshot } from "../services/utils";
 import { UserListResponseItem } from "../../common/codegen/Voter.types";
-import { readFile } from "fs/promises";
+import { readdir, readFile, stat } from "fs/promises";
 import { ChainConfig, DistributedRewards } from "../../common/interfaces";
 import { getCwQueryHelpers } from "../../common/account/cw-helpers";
 import { getSgQueryHelpers } from "../../common/account/sg-helpers";
 import { floor } from "../../common/utils";
+import { rootPath } from "../envs";
 import {
   getChainOptionById,
   getContractByLabel,
@@ -16,7 +16,14 @@ import {
   StakerInfo,
 } from "../../common/codegen/Staking.types";
 import {
+  ENCODING,
+  epochToDateStringUTC,
+  PATH_TO_CONFIG_JSON,
+  readSnapshot,
+} from "../services/utils";
+import {
   CHAIN_ID,
+  MS_PER_SECOND,
   REPLENISHED_INITIALLY,
   REWARDS_DISTRIBUTION_PERIOD,
   REWARDS_REDUCTION_MULTIPLIER,
@@ -27,6 +34,35 @@ import {
 // S = a * (1 - q^n) / (1 - q)
 function calcGeoProgSum(a: number, q: number, n: number): number {
   return Math.ceil((a * (1 - q ** n)) / (1 - q));
+}
+
+export async function getFileDates(): Promise<{
+  [k: string]: string;
+}> {
+  const basePath = "./src/backend/services/snapshots";
+  let entries: [string, Date][] = Object.entries({});
+
+  try {
+    const fileList = await readdir(rootPath(basePath));
+    for (const fileName of fileList) {
+      const path = rootPath(`${basePath}/${fileName}`);
+      const { mtime } = await stat(path);
+      entries.push([fileName, mtime]);
+    }
+  } catch (_) {}
+
+  // last updated first
+  entries.sort(
+    ([_keyA, dateA], [_keyB, dateB]) => dateA.getDate() - dateB.getDate()
+  );
+
+  return Object.fromEntries(
+    entries.map(([file, date]) => {
+      const epoch = date.getTime() / MS_PER_SECOND;
+      const dateStringUTC = epochToDateStringUTC(epoch);
+      return [file, dateStringUTC];
+    })
+  );
 }
 
 export async function getStakers(): Promise<[Addr, StakerInfo][]> {

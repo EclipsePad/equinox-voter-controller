@@ -83,6 +83,7 @@ app.listen(PORT, async () => {
       const lockers = await staking.pQueryLockerList(STAKING.PAGINATION_AMOUNT);
       await writeSnapshot(SNAPSHOT.STAKERS, stakers);
       await writeSnapshot(SNAPSHOT.LOCKERS, lockers);
+      await wait(VOTER.SETTLE_PERIOD * MS_PER_SECOND);
     } catch (error) {
       l(error);
     }
@@ -99,6 +100,7 @@ app.listen(PORT, async () => {
       );
       await writeSnapshot(SNAPSHOT.STAKING_ESSENCE, stakingEssenceList);
       await writeSnapshot(SNAPSHOT.LOCKING_ESSENCE, lockingEssenceList);
+      await wait(VOTER.SETTLE_PERIOD * MS_PER_SECOND);
     } catch (error) {
       l(error);
     }

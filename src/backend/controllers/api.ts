@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import {
+  getFileDates as _getFileDates,
   getStakers as _getStakers,
   getLockers as _getLockers,
   getDistributedRewards as _getDistributedRewards,
@@ -8,6 +9,11 @@ import {
   getEssence as _getEssence,
   getVoters as _getVoters,
 } from "../middleware/api";
+
+export async function getFileDates(_req: Request, res: Response) {
+  const data = await _getFileDates();
+  res.json(data);
+}
 
 export async function getStakers(_req: Request, res: Response) {
   const data = await _getStakers();

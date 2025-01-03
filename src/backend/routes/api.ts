@@ -1,6 +1,7 @@
 import express from "express";
 import { ROUTE } from "../constants";
 import {
+  getFileDates,
   getStakers,
   getLockers,
   getDistributedRewards,
@@ -13,6 +14,7 @@ import {
 const router = express.Router();
 
 router
+  .get(ROUTE.GET_FILE_DATES, getFileDates)
   .get(ROUTE.GET_STAKERS, getStakers)
   .get(ROUTE.GET_LOCKERS, getLockers)
   .get(ROUTE.GET_DISTRIBUTED_REWARDS, getDistributedRewards)

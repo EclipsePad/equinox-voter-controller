@@ -25,6 +25,7 @@ export const SNAPSHOT = {
 };
 
 export const ROUTE = {
+  GET_FILE_DATES: "/get-file-dates",
   GET_STAKERS: "/get-stakers",
   GET_LOCKERS: "/get-lockers",
   GET_DISTRIBUTED_REWARDS: "/get-distributed-rewards",
