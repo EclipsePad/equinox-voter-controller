@@ -12,7 +12,7 @@ interface DistributedRewards {
   balance: number;
   remainingRewards: number;
   timeDays: number;
-  amountToReplensish: number;
+  amountToReplenish: number;
 }
 
 interface AssetDescription {

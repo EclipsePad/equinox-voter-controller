@@ -7,30 +7,23 @@ import rateLimit from "express-rate-limit";
 import { readFile } from "fs/promises";
 import * as h from "helmet";
 import { PORT, SEED } from "./envs";
-import { ENCODING, PATH_TO_CONFIG_JSON, writeSnapshot } from "./services/utils";
 import { ChainConfig } from "../common/interfaces";
 import { getChainOptionById } from "../common/config/config-utils";
 import { getSigner } from "./account/signer";
+import { CHAIN_ID, MS_PER_SECOND, SNAPSHOT, STAKING, VOTER } from "./constants";
 import {
   getCwExecHelpers,
   getCwQueryHelpers,
 } from "../common/account/cw-helpers";
-
-const CHAIN_ID = "neutron-1";
-
-const STAKING = {
-  PAGINATION_AMOUNT: 100,
-  SNAPSHOT_PERIOD: 3_600, // seconds
-};
-
-const VOTER = {
-  PAGINATION_AMOUNT: 15,
-  PUSH_PERIOD: 60, // seconds
-  SETTLE_PERIOD: 10, // seconds
-};
+import {
+  ENCODING,
+  getLocalBlockTime,
+  PATH_TO_CONFIG_JSON,
+  writeSnapshot,
+} from "./services/utils";
 
 const limiter = rateLimit({
-  windowMs: 60 * 1e3, // 1 minute
+  windowMs: 60 * MS_PER_SECOND, // 1 minute
   max: 30, // Limit each IP to 30 requests per `window`
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
@@ -82,26 +75,45 @@ app.listen(PORT, async () => {
   console.clear();
   l(`\n✔️ Server is running on PORT: ${PORT}`);
 
-  // service to make vaults snapshots
+  // service to make regular snapshots
   setInterval(async () => {
+    // vaults
     try {
       const stakers = await staking.pQueryStakerList(STAKING.PAGINATION_AMOUNT);
       const lockers = await staking.pQueryLockerList(STAKING.PAGINATION_AMOUNT);
-      await writeSnapshot("stakers", stakers);
-      await writeSnapshot("lockers", lockers);
+      await writeSnapshot(SNAPSHOT.STAKERS, stakers);
+      await writeSnapshot(SNAPSHOT.LOCKERS, lockers);
+      await wait(VOTER.SETTLE_PERIOD * MS_PER_SECOND);
     } catch (error) {
       l(error);
     }
-  }, STAKING.SNAPSHOT_PERIOD * 1e3);
+
+    // essence
+    try {
+      const blocktTime = getLocalBlockTime();
+      const stakingEssenceList = await staking.pQueryStakingEssenceList(
+        blocktTime,
+        STAKING.PAGINATION_AMOUNT
+      );
+      const lockingEssenceList = await staking.pQueryLockingEssenceList(
+        STAKING.PAGINATION_AMOUNT
+      );
+      await writeSnapshot(SNAPSHOT.STAKING_ESSENCE, stakingEssenceList);
+      await writeSnapshot(SNAPSHOT.LOCKING_ESSENCE, lockingEssenceList);
+      await wait(VOTER.SETTLE_PERIOD * MS_PER_SECOND);
+    } catch (error) {
+      l(error);
+    }
+  }, STAKING.SNAPSHOT_PERIOD * MS_PER_SECOND);
 
   // service to update voter state and make voters snapshots
   let isSnapshotUpdated = false;
   while (true) {
     // try push
-    await wait(VOTER.PUSH_PERIOD * 1e3);
+    await wait(VOTER.PUSH_PERIOD * MS_PER_SECOND);
     try {
       await h.voter.cwPushByAdmin(gasPrice);
-      await wait(VOTER.SETTLE_PERIOD * 1e3);
+      await wait(VOTER.SETTLE_PERIOD * MS_PER_SECOND);
     } catch (error) {
       l(error);
     }
@@ -113,7 +125,7 @@ app.listen(PORT, async () => {
       // make snapshot single time when votes will be applied
       if (!isSnapshotUpdated && rewards_claim_stage === "unclaimed") {
         const users = await voter.pQueryUserList(VOTER.PAGINATION_AMOUNT);
-        await writeSnapshot("voters", users);
+        await writeSnapshot(SNAPSHOT.VOTERS, users);
         isSnapshotUpdated = true;
       }
 

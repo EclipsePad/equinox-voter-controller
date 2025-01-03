@@ -1,36 +1,75 @@
-import { ENCODING, PATH_TO_CONFIG_JSON, readSnapshot } from "../services/utils";
 import { UserListResponseItem } from "../../common/codegen/Voter.types";
-import {
-  Addr,
-  LockerInfo,
-  StakerInfo,
-} from "../../common/codegen/Staking.types";
-import { readFile } from "fs/promises";
+import { readdir, readFile, stat } from "fs/promises";
 import { ChainConfig, DistributedRewards } from "../../common/interfaces";
+import { getCwQueryHelpers } from "../../common/account/cw-helpers";
+import { getSgQueryHelpers } from "../../common/account/sg-helpers";
+import { floor } from "../../common/utils";
+import { rootPath } from "../envs";
 import {
   getChainOptionById,
   getContractByLabel,
 } from "../../common/config/config-utils";
-import { getCwQueryHelpers } from "../../common/account/cw-helpers";
-import { getSgQueryHelpers } from "../../common/account/sg-helpers";
-import { floor, l } from "../../common/utils";
-
-const CHAIN_ID = "neutron-1";
-const REWARDS_DISTRIBUTION_PERIOD = 180; // days
-const REWARDS_REDUCTION_MULTIPLIER = 0.99;
-const SECONDS_PER_DAY = 24 * 3_600;
-const REPLENISHED_INITIALLY = 3_100_000 * 1e6;
+import {
+  Addr,
+  LockerInfo,
+  QueryEssenceListResponseItem,
+  StakerInfo,
+} from "../../common/codegen/Staking.types";
+import {
+  ENCODING,
+  epochToDateStringUTC,
+  PATH_TO_CONFIG_JSON,
+  readSnapshot,
+} from "../services/utils";
+import {
+  CHAIN_ID,
+  MS_PER_SECOND,
+  REPLENISHED_INITIALLY,
+  REWARDS_DISTRIBUTION_PERIOD,
+  REWARDS_REDUCTION_MULTIPLIER,
+  SECONDS_PER_DAY,
+  SNAPSHOT,
+} from "../constants";
 
 // S = a * (1 - q^n) / (1 - q)
 function calcGeoProgSum(a: number, q: number, n: number): number {
   return Math.ceil((a * (1 - q ** n)) / (1 - q));
 }
 
+export async function getFileDates(): Promise<{
+  [k: string]: string;
+}> {
+  const basePath = "./src/backend/services/snapshots";
+  let entries: [string, Date][] = Object.entries({});
+
+  try {
+    const fileList = await readdir(rootPath(basePath));
+    for (const fileName of fileList) {
+      const path = rootPath(`${basePath}/${fileName}`);
+      const { mtime } = await stat(path);
+      entries.push([fileName, mtime]);
+    }
+  } catch (_) {}
+
+  // last updated first
+  entries.sort(
+    ([_keyA, dateA], [_keyB, dateB]) => dateA.getDate() - dateB.getDate()
+  );
+
+  return Object.fromEntries(
+    entries.map(([file, date]) => {
+      const epoch = date.getTime() / MS_PER_SECOND;
+      const dateStringUTC = epochToDateStringUTC(epoch);
+      return [file, dateStringUTC];
+    })
+  );
+}
+
 export async function getStakers(): Promise<[Addr, StakerInfo][]> {
   let stakers: [Addr, StakerInfo][] = [];
 
   try {
-    stakers = await readSnapshot("stakers", []);
+    stakers = await readSnapshot(SNAPSHOT.STAKERS, []);
   } catch (_) {}
 
   return stakers;
@@ -40,10 +79,34 @@ export async function getLockers(): Promise<[Addr, LockerInfo[]][]> {
   let lockers: [Addr, LockerInfo[]][] = [];
 
   try {
-    lockers = await readSnapshot("lockers", []);
+    lockers = await readSnapshot(SNAPSHOT.LOCKERS, []);
   } catch (_) {}
 
   return lockers;
+}
+
+export async function getStakingEssence(): Promise<
+  QueryEssenceListResponseItem[]
+> {
+  let stakingEssence: QueryEssenceListResponseItem[] = [];
+
+  try {
+    stakingEssence = await readSnapshot(SNAPSHOT.STAKING_ESSENCE, []);
+  } catch (_) {}
+
+  return stakingEssence;
+}
+
+export async function getLockingEssence(): Promise<
+  QueryEssenceListResponseItem[]
+> {
+  let lockingEssence: QueryEssenceListResponseItem[] = [];
+
+  try {
+    lockingEssence = await readSnapshot(SNAPSHOT.LOCKING_ESSENCE, []);
+  } catch (_) {}
+
+  return lockingEssence;
 }
 
 export async function getDistributedRewards(): Promise<DistributedRewards> {
@@ -57,7 +120,7 @@ export async function getDistributedRewards(): Promise<DistributedRewards> {
     balance: 0,
     remainingRewards: 0,
     timeDays: 0,
-    amountToReplensish: 0,
+    amountToReplenish: 0,
   };
 
   try {
@@ -66,10 +129,8 @@ export async function getDistributedRewards(): Promise<DistributedRewards> {
     });
     const CHAIN_CONFIG: ChainConfig = JSON.parse(configJsonStr);
     const {
-      PREFIX,
       OPTION: {
         RPC_LIST: [RPC],
-        DENOM,
         CONTRACTS,
       },
     } = getChainOptionById(CHAIN_CONFIG, CHAIN_ID);
@@ -162,7 +223,7 @@ export async function getDistributedRewards(): Promise<DistributedRewards> {
       eclipPerSecond * firstDays * SECONDS_PER_DAY
     );
     const firstWeekRewards = eclipPerSecond * 7 * SECONDS_PER_DAY;
-    const amountToReplensish =
+    const amountToReplenish =
       firstDaysRewards +
       calcGeoProgSum(firstWeekRewards, REWARDS_REDUCTION_MULTIPLIER, weeks) -
       remainingRewards;
@@ -177,18 +238,62 @@ export async function getDistributedRewards(): Promise<DistributedRewards> {
       balance: stakingBalance,
       remainingRewards,
       timeDays,
-      amountToReplensish,
+      amountToReplenish,
     };
   } catch (_) {}
 
   return distributedRewardsResponse;
 }
 
+export async function getEssence(): Promise<string> {
+  let file: string = "wallets,essence\n";
+
+  try {
+    // read snapshots
+    const stakingData = await getStakingEssence();
+    const lockingData = await getLockingEssence();
+
+    // merge and remove duplications
+    const addressList = Array.from(
+      new Set([
+        ...stakingData.map((x) => x.user),
+        ...lockingData.map((x) => x.user),
+      ])
+    );
+
+    // calc essence
+    let finalList: [string, number][] = [];
+
+    for (const address of addressList) {
+      const stakingEssence = Number(
+        stakingData.find((x) => x.user === address)?.essence || ""
+      );
+      const lockingEssence = Number(
+        lockingData.find((x) => x.user === address)?.essence || ""
+      );
+      const essence = stakingEssence + lockingEssence;
+
+      if (!essence) continue;
+      finalList.push([address, essence]);
+    }
+
+    finalList.sort(
+      ([_addressA, essenceA], [_addressB, essenceB]) => essenceB - essenceA
+    );
+
+    file = finalList
+      .reduce((acc, [wallet, essence]) => acc + `${wallet},${essence}\n`, file)
+      .trim();
+  } catch (_) {}
+
+  return file;
+}
+
 export async function getVoters(): Promise<UserListResponseItem[]> {
   let voters: UserListResponseItem[] = [];
 
   try {
-    voters = await readSnapshot("voters", []);
+    voters = await readSnapshot(SNAPSHOT.VOTERS, []);
   } catch (_) {}
 
   return voters;
