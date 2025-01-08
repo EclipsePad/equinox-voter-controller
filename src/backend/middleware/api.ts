@@ -245,8 +245,8 @@ export async function getDistributedRewards(): Promise<DistributedRewards> {
   return distributedRewardsResponse;
 }
 
-export async function getEssence(): Promise<string> {
-  let file: string = "wallets,essence\n";
+export async function getEssence(): Promise<[string, number][]> {
+  let finalList: [string, number][] = [];
 
   try {
     // read snapshots
@@ -262,8 +262,6 @@ export async function getEssence(): Promise<string> {
     );
 
     // calc essence
-    let finalList: [string, number][] = [];
-
     for (const address of addressList) {
       const stakingEssence = Number(
         stakingData.find((x) => x.user === address)?.essence || ""
@@ -280,13 +278,9 @@ export async function getEssence(): Promise<string> {
     finalList.sort(
       ([_addressA, essenceA], [_addressB, essenceB]) => essenceB - essenceA
     );
-
-    file = finalList
-      .reduce((acc, [wallet, essence]) => acc + `${wallet},${essence}\n`, file)
-      .trim();
   } catch (_) {}
 
-  return file;
+  return finalList;
 }
 
 export async function getVoters(): Promise<UserListResponseItem[]> {

@@ -162,7 +162,7 @@ GET requests:
 
 `/get-locking-essence` - returns actual (captured in [SNAPSHOT_PERIOD](#snapshot-period)* ago) locking essence list [QueryEssenceListResponseItem[]](https://github.com/EclipsePad/equinox-voter-controller/blob/main/src/common/codegen/Staking.types.ts#L237)
 
-`/get-essence` - returns actual (captured in [SNAPSHOT_PERIOD](#snapshot-period)* ago) staking plus locking essence value as `wallets,essence` .csv table
+`/get-essence` - returns actual (captured in [SNAPSHOT_PERIOD](#snapshot-period)* ago) list of user address and staking plus locking essence value `[string, number][]`
 
 `/get-voters` - returns previous epoch [UserListResponseItem[]](https://github.com/EclipsePad/eclipse-contracts-core/blob/main/scripts/src/interfaces/Voter.types.ts#L277)
 
