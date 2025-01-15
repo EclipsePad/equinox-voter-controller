@@ -1,15 +1,18 @@
 import express from "express";
-import { l, wait } from "../common/utils";
+import { getLast, l, wait } from "../common/utils";
 import { text, json } from "body-parser";
 import cors from "cors";
 import { api } from "./routes/api";
 import rateLimit from "express-rate-limit";
 import { readFile } from "fs/promises";
 import * as h from "helmet";
-import { PORT, SEED } from "./envs";
+import { MONGODB, PORT, SEED } from "./envs";
 import { ChainConfig } from "../common/interfaces";
 import { getChainOptionById } from "../common/config/config-utils";
 import { getSigner } from "./account/signer";
+import { addEssence, addVoteResults, addVoters } from "./db/requests";
+import { getEssence } from "./middleware/api";
+import { DatabaseClient } from "./db/client";
 import { CHAIN_ID, MS_PER_SECOND, SNAPSHOT, STAKING, VOTER } from "./constants";
 import {
   getCwExecHelpers,
@@ -19,8 +22,11 @@ import {
   ENCODING,
   getLocalBlockTime,
   PATH_TO_CONFIG_JSON,
+  ScheduledTaskRunner,
   writeSnapshot,
 } from "./services/utils";
+
+const dbClient = new DatabaseClient(MONGODB, "equinox_voter_controller");
 
 const limiter = rateLimit({
   windowMs: 60 * MS_PER_SECOND, // 1 minute
@@ -75,6 +81,17 @@ app.listen(PORT, async () => {
   console.clear();
   l(`\n✔️ Server is running on PORT: ${PORT}`);
 
+  // schedule essence snapshot for db
+  new ScheduledTaskRunner().scheduleTask(
+    STAKING.DB_ESSENCE_SNAPSHOT_HOUR,
+    async () => {
+      const essence = await getEssence();
+      await dbClient.connect();
+      await addEssence(essence);
+      await dbClient.disconnect();
+    }
+  );
+
   // service to make regular snapshots
   setInterval(async () => {
     // vaults
@@ -111,6 +128,8 @@ app.listen(PORT, async () => {
   while (true) {
     // try push
     await wait(VOTER.PUSH_PERIOD * MS_PER_SECOND);
+    const { id } = await voter.cwQueryEpochInfo();
+
     try {
       await h.voter.cwPushByAdmin(gasPrice);
       await wait(VOTER.SETTLE_PERIOD * MS_PER_SECOND);
@@ -126,11 +145,23 @@ app.listen(PORT, async () => {
       if (!isSnapshotUpdated && rewards_claim_stage === "unclaimed") {
         const users = await voter.pQueryUserList(VOTER.PAGINATION_AMOUNT);
         await writeSnapshot(SNAPSHOT.VOTERS, users);
+
+        await dbClient.connect();
+        await addVoters(users, id);
+        await dbClient.disconnect();
+
         isSnapshotUpdated = true;
       }
 
-      // reset snapshot flag
+      // update db single time when rewards will be updated, reset snapshot flag
       if (isSnapshotUpdated && rewards_claim_stage === "swapped") {
+        const { vote_results } = await voter.cwQueryVoterInfo();
+        const voteResults = getLast(vote_results);
+
+        await dbClient.connect();
+        await addVoteResults(voteResults);
+        await dbClient.disconnect();
+
         isSnapshotUpdated = false;
       }
     } catch (error) {

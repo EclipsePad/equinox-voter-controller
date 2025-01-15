@@ -1,6 +1,6 @@
 ### Project Description
 
-***equinox-voter-controller*** is a script running Express.js server to send `PushByAdmin` msg to voter contract every minute and provide REST API for data from Eclipse Fi core contracts
+***equinox-voter-controller*** is a script running Express.js server to send `PushByAdmin` msg to voter contract every minute, provide REST API for data from Eclipse Fi core contracts and store historical data in MongoDB
 
 
 ### Settings (Ubuntu 22.04)
@@ -48,6 +48,7 @@ Enter actual values (replace placeholders <_>)
 PORT=<port>
 SEED=<your_seed_phrase>
 BASE_URL=http://<server_ip>:<port>
+MONGODB=<MongoDB_URI>
 ```
 
 Save the file (Ctrl+X, then Y, then Enter)
@@ -136,7 +137,7 @@ sudo systemctl stop voter.service && sudo systemctl disable voter.service && sud
 ```
 3) Fetch updates
 ```
-cd equinox-voter-controller && git fetch origin && git reset --hard origin/main
+cd equinox-voter-controller && git fetch origin && git reset --hard origin/main && yarn
 ```
 4) Restart the service
 ```
@@ -168,3 +169,14 @@ GET requests:
 
 
 <a id="snapshot-period"></a> *[SNAPSHOT_PERIOD](https://github.com/EclipsePad/equinox-voter-controller/blob/main/src/backend/constants.ts#L10)
+
+
+## Historical Data
+
+The script creates `equinox_voter_controller` database in MongoDB with following collections:
+
+`essence` - uses `/get-essence` request data and updates it once per day at [DB_ESSENCE_SNAPSHOT_HOUR](https://github.com/EclipsePad/equinox-voter-controller/blob/main/src/backend/constants.ts#L11)
+
+`vote_results` - stores previos epoch vote results as [VoteResults](https://github.com/EclipsePad/eclipse-contracts-core/blob/main/scripts/src/interfaces/Voter.types.ts#L295) once per epoch
+
+`voters` - uses `/get-voters` request data and updates it once per epoch

@@ -8,6 +8,7 @@ export const REPLENISHED_INITIALLY = 3_100_000 * 1e6;
 export const STAKING = {
   PAGINATION_AMOUNT: 100,
   SNAPSHOT_PERIOD: 30 * 60, // seconds
+  DB_ESSENCE_SNAPSHOT_HOUR: 22,
 };
 
 export const VOTER = {

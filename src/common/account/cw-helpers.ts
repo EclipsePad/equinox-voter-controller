@@ -392,6 +392,16 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
     return logAndReturn(res, isDisplayed);
   }
 
+  async function cwQueryEpochInfo(isDisplayed: boolean = false) {
+    const res = await voterQueryClient.epochInfo();
+    return logAndReturn(res, isDisplayed);
+  }
+
+  async function cwQueryVoterInfo(isDisplayed: boolean = false) {
+    const res = await voterQueryClient.voterInfo({});
+    return logAndReturn(res, isDisplayed);
+  }
+
   async function pQueryUserList(
     maxPaginationAmount: number,
     maxCount: number = 0,
@@ -435,6 +445,8 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
     },
     voter: {
       cwQueryOperationStatus,
+      cwQueryEpochInfo,
+      cwQueryVoterInfo,
       pQueryUserList,
     },
   };

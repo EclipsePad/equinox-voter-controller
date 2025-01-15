@@ -148,6 +148,43 @@ async function readSnapshot<T>(fileName: string, defaultValue: T): Promise<T> {
   return data ? JSON.parse(data) : defaultValue;
 }
 
+interface TaskScheduler {
+  scheduleTask: (targetHour: number, taskFunction: () => Promise<void>) => void;
+  getTimeUntilTarget: (targetHour: number) => number;
+}
+
+class ScheduledTaskRunner implements TaskScheduler {
+  scheduleTask(targetHour: number, taskFunction: () => Promise<void>): void {
+    const timeUntilTarget = this.getTimeUntilTarget(targetHour);
+    l(`Task scheduled to run in ${timeUntilTarget / (60 * 1e3)} minutes`);
+
+    setTimeout(async () => {
+      try {
+        await taskFunction();
+      } catch (_) {}
+    }, timeUntilTarget);
+  }
+
+  getTimeUntilTarget(targetHour: number): number {
+    const now: Date = new Date();
+    const targetTime: Date = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      targetHour,
+      0,
+      0
+    );
+
+    // If it's already past target hour UTC, schedule for next day
+    if (now.getUTCHours() >= targetHour) {
+      targetTime.setDate(targetTime.getDate() + 1);
+    }
+
+    return targetTime.getTime() - now.getTime();
+  }
+}
+
 export {
   ENCODING,
   PATH_TO_CONFIG_JSON,
@@ -162,4 +199,5 @@ export {
   getBlockTime,
   writeSnapshot,
   readSnapshot,
+  ScheduledTaskRunner,
 };
