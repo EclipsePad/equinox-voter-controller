@@ -1,5 +1,5 @@
-import { EssenceModel, VotersModel } from "./models";
-import { IEssence, IVoters } from "./types";
+import { EssenceModel, VoteResultsModel, VotersModel } from "./models";
+import { IEssence, IVoteResults, IVoters } from "./types";
 
 export async function addEssence(essence: IEssence) {
   const model = new EssenceModel({
@@ -34,7 +34,7 @@ export async function addVoters(
   try {
     const model = new VotersModel({
       voters,
-      epochId,
+      epoch_id: epochId,
       createdAt,
     });
 
@@ -65,11 +65,11 @@ export async function getVotersInDateRange(from: Date, to: Date = new Date()) {
 }
 
 export async function getVotersByEpoch(epochId: number) {
-  return await VotersModel.findOne({ epochId });
+  return await VotersModel.findOne({ epoch_id: epochId });
 }
 
 export async function getVotersByLatestEpoch() {
-  return await VotersModel.findOne().sort({ epochId: -1 }).limit(1);
+  return await VotersModel.findOne().sort({ epoch_id: -1 }).limit(1);
 }
 
 export async function getVotersInEpochRange(from: number, to: number) {
@@ -78,5 +78,56 @@ export async function getVotersInEpochRange(from: number, to: number) {
       $gte: from,
       $lte: to,
     },
-  }).sort({ epochId: 1 });
+  }).sort({ epoch_id: 1 });
+}
+
+export async function addVoteResults(voteResults: IVoteResults) {
+  try {
+    const model = new VoteResultsModel(voteResults);
+    return await model.save();
+  } catch (error) {
+    if ((error as any).code === 11000) {
+      throw new Error(
+        `Vote results for epoch ${voteResults.epoch_id} already exist`
+      );
+    }
+    throw error;
+  }
+}
+
+export async function getVoteResults() {
+  return await VoteResultsModel.find();
+}
+
+export async function getVoteResultsByLatestDate() {
+  return await VoteResultsModel.findOne().sort({ createdAt: -1 });
+}
+
+export async function getVoteResultsInDateRange(
+  from: Date,
+  to: Date = new Date()
+) {
+  return await VoteResultsModel.find({
+    createdAt: {
+      $gte: from,
+      $lte: to,
+    },
+  });
+}
+
+export async function getVoteResultsByEpoch(epochId: number) {
+  return await VoteResultsModel.findOne({ epoch_id: epochId });
+}
+
+export async function getVoteResultsByLatestEpoch() {
+  return await VoteResultsModel.findOne().sort({ epoch_id: -1 }).limit(1);
+}
+
+export async function getVoteResultsInEpochRange(from: number, to: number) {
+  return await VoteResultsModel.find({
+    epochId: {
+      $gte: from,
+      $lte: to,
+    },
+  }).sort({ epoch_id: 1 });
 }
