@@ -12,7 +12,11 @@ export interface IEssenceDocument extends Document {
 export type IVoters = UserListResponseItem[];
 export interface IVotersSchema {
   voters: IVoters;
+  epochId: number;
 }
-export interface IVotersDocument extends Document {
-  voters: IVoters;
+export interface IVotersDocument extends IVotersSchema, Document {}
+
+// to validate string numbers: Uint128, Decimal
+export function isStringNumber(value: string): boolean {
+  return !isNaN(Number(value));
 }

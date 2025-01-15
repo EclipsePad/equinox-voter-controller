@@ -1,16 +1,23 @@
 import express from "express";
-import { l, li, wait } from "../common/utils";
+import { l, li, wait, Request } from "../common/utils";
 import { text, json } from "body-parser";
 import cors from "cors";
 import { api } from "./routes/api";
 import rateLimit from "express-rate-limit";
 import { readFile } from "fs/promises";
 import * as h from "helmet";
-import { PORT, SEED, MONGODB } from "./envs";
+import { PORT, SEED, MONGODB, BASE_URL } from "./envs";
 import { ChainConfig } from "../common/interfaces";
 import { getChainOptionById } from "../common/config/config-utils";
 import { getSigner } from "./account/signer";
-import { CHAIN_ID, MS_PER_SECOND, SNAPSHOT, STAKING, VOTER } from "./constants";
+import {
+  CHAIN_ID,
+  MS_PER_SECOND,
+  ROUTE,
+  SNAPSHOT,
+  STAKING,
+  VOTER,
+} from "./constants";
 import {
   getCwExecHelpers,
   getCwQueryHelpers,
@@ -24,85 +31,39 @@ import {
 import { DatabaseClient } from "./db/client";
 import {
   addEssence,
-  getAllEssence,
+  getEssence,
   addVoters,
-  getAllVoters,
+  getVoters,
+  getVotersByEpoch,
+  getVotersByLatestEpoch,
+  getVotersInEpochRange,
+  getVotersInDateRange,
 } from "./db/requests";
+import { UserListResponseItem } from "../common/codegen/Voter.types";
 
 const dbClient = new DatabaseClient(MONGODB, "equinox_voter_controller");
+const req = new Request({ baseURL: `${BASE_URL}/api` });
 
 // Usage example
 async function main() {
+  const voters: UserListResponseItem[] = await req.get(ROUTE.GET_VOTERS);
+  const essence: [string, number][] = await req.get(ROUTE.GET_ESSENCE);
+
   await dbClient.connect();
 
-  await addEssence([
-    ["neutron17zxc4ypxz57pu8z7t9e3wv9f7dd52qsgykee4n", 5487879694616],
-    ["neutron14kqr9fjjzl24gwfndf05wkelncm76ynkly46al", 1186507797652],
-    ["neutron1ez6r6jj0fgxauy3z9j8n85myjwnzt49nw3fkz2", 794052623261],
-    ["neutron18zg25px05vr32tfhdp2fpqxx0p6jkl7u6hlqqh", 720247775293],
-    ["neutron15fhr3305rajmmt8g48h9hnnnxt9qm4az2jwh0j", 648863590868],
-  ]);
-  const res = await getAllEssence();
+  await addEssence(essence);
+  const res = await getEssence();
   li(res);
 
-  await addVoters([
-    {
-      address: "neutron1004fzxae7cc38kdv2xe0t7jgf6w4enxj7s3546",
-      user_info: [
-        {
-          user_type: "slacker",
-          essence_info: {
-            staking_components: ["0", "0"],
-            locking_amount: "1000000",
-          },
-          essence_value: "1000000",
-          weights: [],
-          rewards: {
-            value: [],
-            last_update_epoch: 0,
-          },
-        },
-      ],
-    },
-    {
-      address: "neutron100umj0vh33m70jygraewjyp8w7lyt30ny29k4h",
-      user_info: [
-        {
-          user_type: "slacker",
-          essence_info: {
-            staking_components: ["1000000", "1706181017000000"],
-            locking_amount: "0",
-          },
-          essence_value: "949067",
-          weights: [],
-          rewards: {
-            value: [],
-            last_update_epoch: 0,
-          },
-        },
-      ],
-    },
-    {
-      address: "neutron100xv932sh9755qlr6rjg0llrazarug7hfh9l4w",
-      user_info: [
-        {
-          user_type: "slacker",
-          essence_info: {
-            staking_components: ["0", "0"],
-            locking_amount: "1511813800",
-          },
-          essence_value: "1511813800",
-          weights: [],
-          rewards: {
-            value: [],
-            last_update_epoch: 0,
-          },
-        },
-      ],
-    },
-  ]);
-  const res2 = await getAllVoters();
+  await addVoters(voters, 4, new Date(Date.now() + 10_000 * 1e3));
+  const res2 = await getVoters();
   li(res2);
+
+  // const res = await getVotersInDateRange(
+  //   new Date("2025-01-15T07:36:41.604+00:00"),
+  //   new Date("2025-01-15T15:10:29.438+00:00")
+  // );
+  // li(res?.map((x) => x.epochId));
 
   await dbClient.disconnect();
 }

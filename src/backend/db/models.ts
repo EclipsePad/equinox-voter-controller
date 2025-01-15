@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
 import { IEssenceDocument, IVotersDocument } from "./types";
-import { essenceSchema, votersSchema } from "./schemas";
+import { EssenceSchema, VotersSchema } from "./schemas";
 
 export const EssenceModel = mongoose.model<IEssenceDocument>(
   "essence_model",
-  essenceSchema
+  EssenceSchema
 );
 
 export const VotersModel = mongoose.model<IVotersDocument>(
   "voters_model",
-  votersSchema
+  VotersSchema
 );

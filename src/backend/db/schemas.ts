@@ -1,7 +1,12 @@
 import { Schema } from "mongoose";
-import { IEssence, IEssenceSchema, IVoters, IVotersSchema } from "./types";
+import {
+  IEssence,
+  IEssenceSchema,
+  isStringNumber,
+  IVotersSchema,
+} from "./types";
 
-export const essenceSchema = new Schema<IEssenceSchema>(
+export const EssenceSchema = new Schema<IEssenceSchema>(
   {
     essence: {
       type: [[{ type: Schema.Types.Mixed }]],
@@ -20,21 +25,178 @@ export const essenceSchema = new Schema<IEssenceSchema>(
       },
     },
   },
-  { timestamps: { createdAt: true, updatedAt: false }, collection: "essence" }
+  {
+    timestamps: { createdAt: true, updatedAt: false },
+    minimize: true,
+    strict: true,
+    collection: "essence",
+  }
 );
 
-export const votersSchema = new Schema<IVotersSchema>(
+const RewardsItemSchema = new Schema(
   {
-    voters: {
-      type: [[{ type: Schema.Types.Mixed }]],
+    amount: {
+      type: String,
       required: true,
       validate: {
-        validator: function (v: any[]): v is IVoters {
-          return v.every(() => true);
-        },
-        message: "",
+        validator: isStringNumber,
+        message: "amount must be a string representation of a number",
+      },
+    },
+    symbol: {
+      type: String,
+      required: true,
+    },
+  },
+  {
+    _id: false,
+    timestamps: false,
+  }
+);
+
+const RewardsInfoSchema = new Schema(
+  {
+    last_update_epoch: {
+      type: Number,
+      required: true,
+    },
+    value: {
+      type: [RewardsItemSchema],
+      required: true,
+      default: [],
+    },
+  },
+  {
+    _id: false,
+    timestamps: false,
+  }
+);
+
+const EssenceInfoSchema = new Schema(
+  {
+    locking_amount: {
+      type: String,
+      required: true,
+      validate: {
+        validator: isStringNumber,
+        message: "locking_amount must be a string representation of a number",
+      },
+    },
+    staking_components: {
+      type: [String],
+      required: true,
+      validate: {
+        validator: (value: string[]) =>
+          value.length === 2 && value.every(isStringNumber),
+        message: "staking_components must be an array of two string numbers",
       },
     },
   },
-  { timestamps: { createdAt: true, updatedAt: false }, collection: "voters" }
+  {
+    _id: false,
+    timestamps: false,
+  }
 );
+
+const WeightAllocationItemSchema = new Schema(
+  {
+    lp_token: {
+      type: String,
+      required: true,
+    },
+    weight: {
+      type: String,
+      required: true,
+      validate: {
+        validator: isStringNumber,
+        message: "weight must be a string representation of a decimal",
+      },
+    },
+  },
+  {
+    _id: false,
+    timestamps: false,
+  }
+);
+
+const UserResponseSchema = new Schema(
+  {
+    essence_info: {
+      type: EssenceInfoSchema,
+      required: true,
+    },
+    essence_value: {
+      type: String,
+      required: true,
+      validate: {
+        validator: isStringNumber,
+        message: "essence_value must be a string representation of a number",
+      },
+    },
+    rewards: {
+      type: RewardsInfoSchema,
+      required: true,
+    },
+    user_type: {
+      type: String,
+      required: true,
+      enum: ["elector", "delegator", "slacker"],
+    },
+    weights: {
+      type: [WeightAllocationItemSchema],
+      required: true,
+      default: [],
+    },
+  },
+  {
+    _id: false,
+    timestamps: false,
+  }
+);
+
+const UserListResponseItemSchema = new Schema(
+  {
+    address: {
+      type: String,
+      required: true,
+    },
+    user_info: {
+      type: [UserResponseSchema],
+      required: true,
+      default: [],
+    },
+  },
+  {
+    _id: false,
+    timestamps: false,
+  }
+);
+
+export const VotersSchema = new Schema<IVotersSchema>(
+  {
+    voters: {
+      type: [UserListResponseItemSchema],
+      required: true,
+      default: [],
+    },
+    epochId: {
+      type: Number,
+      required: true,
+      validate: {
+        validator: (value: number) => value > 0 && Number.isInteger(value),
+        message: "epochId must be a positive integer",
+      },
+      default: 1,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  {
+    timestamps: { createdAt: true, updatedAt: false },
+    minimize: true,
+    strict: true,
+    collection: "voters",
+  }
+).index({ epochId: 1 }, { unique: true });
