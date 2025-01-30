@@ -6,7 +6,7 @@ import {
   PriceItem,
   calcEstimatedDaoProfit,
   calcOptimizedDaoWeights,
-} from "../middleware/math";
+} from "../helpers/math";
 
 const POOL = {
   ECLIP_ATOM: "eclip_atom",

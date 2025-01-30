@@ -1,4 +1,4 @@
-import { floor, getLast, li } from "../../common/utils";
+import { floor, getLast } from "../../common/utils";
 import {
   BribesAllocationItem,
   WeightAllocationItem,

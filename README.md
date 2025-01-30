@@ -1,6 +1,6 @@
 ### Project Description
 
-***equinox-voter-controller*** is a script running Express.js server to send `PushByAdmin` msg to voter contract every minute, provide REST API for data from Eclipse Fi core contracts and store historical data in MongoDB
+***equinox-voter-controller*** is a script running Express.js server to send `PushByAdmin` msg to voter contract every minute, rebalance delegation DAO weights sending `PlaceVoteAsDao` msg to voter contract every hour (if the condition is met), provide REST API for data from Eclipse Fi core contracts and store historical data in MongoDB
 
 
 ### Settings (Ubuntu 22.04)

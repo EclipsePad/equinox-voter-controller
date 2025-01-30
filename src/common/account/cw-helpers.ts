@@ -34,7 +34,11 @@ import {
   ChainConfig,
   ContractInfo,
 } from "../interfaces";
-import { UserListResponse, UserListResponseItem } from "../codegen/Voter.types";
+import {
+  UserListResponse,
+  UserListResponseItem,
+  WeightAllocationItem,
+} from "../codegen/Voter.types";
 import {
   Addr,
   LockerInfo,
@@ -213,9 +217,20 @@ async function getCwExecHelpers(
     );
   }
 
+  async function cwPlaceVoteAsDao(
+    weightAllocation: WeightAllocationItem[],
+    gasPrice: string
+  ) {
+    return await _msgWrapperWithGasPrice(
+      [voterMsgComposer.placeVoteAsDao({ weightAllocation })],
+      gasPrice,
+      1.5
+    );
+  }
+
   return {
     utils: { cwTransferAdmin, cwMigrateMultipleContracts },
-    voter: { cwPushByAdmin },
+    voter: { cwPushByAdmin, cwPlaceVoteAsDao },
   };
 }
 
@@ -387,6 +402,19 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
 
   // voter
 
+  async function cwQueryEstimatedRewards(
+    user?: string,
+    isDisplayed: boolean = false
+  ) {
+    const res = await voterQueryClient.estimatedRewards({ user });
+    return logAndReturn(res, isDisplayed);
+  }
+
+  async function cwQueryOptimizationData(isDisplayed: boolean = false) {
+    const res = await voterQueryClient.optimizationData();
+    return logAndReturn(res, isDisplayed);
+  }
+
   async function cwQueryOperationStatus(isDisplayed: boolean = false) {
     const res = await voterQueryClient.operationStatus();
     return logAndReturn(res, isDisplayed);
@@ -444,6 +472,8 @@ async function getCwQueryHelpers(chainId: string, rpc: string) {
       pQueryLockingEssenceList,
     },
     voter: {
+      cwQueryEstimatedRewards,
+      cwQueryOptimizationData,
       cwQueryOperationStatus,
       cwQueryEpochInfo,
       cwQueryVoterInfo,
