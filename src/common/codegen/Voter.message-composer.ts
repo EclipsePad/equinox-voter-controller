@@ -8,7 +8,7 @@ import { Coin } from "@cosmjs/amino";
 import { MsgExecuteContractEncodeObject } from "@cosmjs/cosmwasm-stargate";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { toUtf8 } from "@cosmjs/encoding";
-import { InstantiateMsg, ExecuteMsg, Decimal, Uint128, AstroStakingRewardConfig, WeightAllocationItem, RouteListItem, RouteItem, QueryMsg, MigrateMsg, Addr, AddressConfig, AstroStakingRewardResponse, ArrayOfBribesAllocationItem, BribesAllocationItem, RewardsItem, DaoResponse, EssenceInfo, DateConfig, EpochInfo, RewardsClaimStage, OperationStatusResponse, ArrayOfRewardsItem, ArrayOfRouteListItem, TokenConfig, UserType, ArrayOfUserResponse, UserResponse, RewardsInfo, UserListResponse, UserListResponseItem, VoterInfoResponse, EssenceAllocationItem, VoteResults, PoolInfoItem, ArrayOfTupleOfAddrAndUint128 } from "./Voter.types";
+import { InstantiateMsg, ExecuteMsg, Decimal, Uint128, AstroStakingRewardConfig, WeightAllocationItem, RouteListItem, RouteItem, QueryMsg, MigrateMsg, Addr, AddressConfig, AstroStakingRewardResponse, ArrayOfBribesAllocationItem, BribesAllocationItem, RewardsItem, DaoResponse, EssenceInfo, DateConfig, ArrayOfString, TupleOfEssenceInfoAndEssenceInfo, UserType, ArrayOfUserType, EpochInfo, EstimatedRewardsResponse, RewardsClaimStage, OperationStatusResponse, OptimizationDataResponse, ArrayOfRewardsItem, ArrayOfRouteListItem, TokenConfig, ArrayOfUserResponse, UserResponse, RewardsInfo, UserListResponse, UserListResponseItem, VoterInfoResponse, EssenceAllocationItem, VoteResults, PoolInfoItem, ArrayOfTupleOfAddrAndUint128 } from "./Voter.types";
 export interface VoterMsg {
   contractAddress: string;
   sender: string;
@@ -89,6 +89,13 @@ export interface VoterMsg {
   }: {
     weight: Decimal;
   }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  setDelegationByAdmin: ({
+    user,
+    weight
+  }: {
+    user: string;
+    weight: Decimal;
+  }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
   placeVote: ({
     weightAllocation
   }: {
@@ -135,6 +142,7 @@ export class VoterMsgComposer implements VoterMsg {
     this.claimAstroRewards = this.claimAstroRewards.bind(this);
     this.claimTreasuryRewards = this.claimTreasuryRewards.bind(this);
     this.setDelegation = this.setDelegation.bind(this);
+    this.setDelegationByAdmin = this.setDelegationByAdmin.bind(this);
     this.placeVote = this.placeVote.bind(this);
     this.placeVoteAsDao = this.placeVoteAsDao.bind(this);
     this.claimRewards = this.claimRewards.bind(this);
@@ -400,6 +408,28 @@ export class VoterMsgComposer implements VoterMsg {
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
           set_delegation: {
+            weight
+          }
+        })),
+        funds: _funds
+      })
+    };
+  };
+  setDelegationByAdmin = ({
+    user,
+    weight
+  }: {
+    user: string;
+    weight: Decimal;
+  }, _funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(JSON.stringify({
+          set_delegation_by_admin: {
+            user,
             weight
           }
         })),

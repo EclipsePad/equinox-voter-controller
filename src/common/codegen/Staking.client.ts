@@ -6,7 +6,7 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { Coin, StdFee } from "@cosmjs/amino";
-import { Decimal, Addr, Uint128, InstantiateMsg, PaginationConfig, ExecuteMsg, Binary, Cw20ReceiveMsg, QueryMsg, MigrateMsg, Vault, QueryAprInfoResponse, AprInfoItem, LockingAprItem, QueryBalancesResponse, Uint64, Config, QueryEssenceResponse, ArrayOfTupleOfAddrAndEssenceInfo, EssenceInfo, ArrayOfTupleOfAddrAndArrayOfLockerInfo, LockerInfo, ArrayOfQueryEssenceListResponseItem, QueryEssenceListResponseItem, Boolean, QueryRewardsReductionInfoResponse, StakerInfoResponse, EssenceAndRewardsInfo, StakerInfo, ArrayOfTupleOfAddrAndStakerInfo, StateResponse, State, UsersAmountResponse, ArrayOfUint128 } from "./Staking.types";
+import { Decimal, Addr, Uint128, InstantiateMsg, PaginationConfig, ExecuteMsg, Binary, Cw20ReceiveMsg, QueryMsg, MigrateMsg, Vault, QueryAprInfoResponse, AprInfoItem, LockingAprItem, QueryBalancesResponse, Uint64, ArrayOfTupleOfAddrAndNullableUint64, Config, QueryEssenceResponse, ArrayOfTupleOfAddrAndEssenceInfo, EssenceInfo, ArrayOfTupleOfAddrAndArrayOfLockerInfo, LockerInfo, ArrayOfQueryEssenceListResponseItem, QueryEssenceListResponseItem, Boolean, QueryRewardsReductionInfoResponse, StakerInfoResponse, EssenceAndRewardsInfo, StakerInfo, ArrayOfTupleOfAddrAndStakerInfo, StateResponse, State, UsersAmountResponse, ArrayOfUint128 } from "./Staking.types";
 export interface StakingReadOnlyInterface {
   contractAddress: string;
   queryConfig: () => Promise<Config>;
@@ -85,6 +85,13 @@ export interface StakingReadOnlyInterface {
   }: {
     user: string;
   }) => Promise<Uint64>;
+  queryBondedVaultCreationDateList: ({
+    amount,
+    startFrom
+  }: {
+    amount: number;
+    startFrom?: string;
+  }) => Promise<ArrayOfTupleOfAddrAndNullableUint64>;
   queryBeclipSupply: () => Promise<Uint128>;
 }
 export class StakingQueryClient implements StakingReadOnlyInterface {
@@ -113,6 +120,7 @@ export class StakingQueryClient implements StakingReadOnlyInterface {
     this.queryRewardsReductionInfo = this.queryRewardsReductionInfo.bind(this);
     this.queryPauseState = this.queryPauseState.bind(this);
     this.queryBondedVaultCreationDate = this.queryBondedVaultCreationDate.bind(this);
+    this.queryBondedVaultCreationDateList = this.queryBondedVaultCreationDateList.bind(this);
     this.queryBeclipSupply = this.queryBeclipSupply.bind(this);
   }
   queryConfig = async (): Promise<Config> => {
@@ -299,6 +307,20 @@ export class StakingQueryClient implements StakingReadOnlyInterface {
       }
     });
   };
+  queryBondedVaultCreationDateList = async ({
+    amount,
+    startFrom
+  }: {
+    amount: number;
+    startFrom?: string;
+  }): Promise<ArrayOfTupleOfAddrAndNullableUint64> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      query_bonded_vault_creation_date_list: {
+        amount,
+        start_from: startFrom
+      }
+    });
+  };
   queryBeclipSupply = async (): Promise<Uint128> => {
     return this.client.queryContractSmart(this.contractAddress, {
       query_beclip_supply: {}
@@ -404,6 +426,15 @@ export interface StakingInterface extends StakingReadOnlyInterface {
   }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
   pause: (fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
   unpause: (fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
+  fixBondedVault: ({
+    bondedVaultCreationDate,
+    tier4VaultCreationDate,
+    user
+  }: {
+    bondedVaultCreationDate?: number;
+    tier4VaultCreationDate?: number;
+    user: string;
+  }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
 }
 export class StakingClient extends StakingQueryClient implements StakingInterface {
   client: SigningCosmWasmClient;
@@ -434,6 +465,7 @@ export class StakingClient extends StakingQueryClient implements StakingInterfac
     this.decreaseBalance = this.decreaseBalance.bind(this);
     this.pause = this.pause.bind(this);
     this.unpause = this.unpause.bind(this);
+    this.fixBondedVault = this.fixBondedVault.bind(this);
   }
   receive = async ({
     amount,
@@ -647,6 +679,23 @@ export class StakingClient extends StakingQueryClient implements StakingInterfac
   unpause = async (fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
       unpause: {}
+    }, fee, memo, _funds);
+  };
+  fixBondedVault = async ({
+    bondedVaultCreationDate,
+    tier4VaultCreationDate,
+    user
+  }: {
+    bondedVaultCreationDate?: number;
+    tier4VaultCreationDate?: number;
+    user: string;
+  }, fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      fix_bonded_vault: {
+        bonded_vault_creation_date: bondedVaultCreationDate,
+        tier_4_vault_creation_date: tier4VaultCreationDate,
+        user
+      }
     }, fee, memo, _funds);
   };
 }
