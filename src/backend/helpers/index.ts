@@ -78,8 +78,11 @@ export async function getAllPrices(symbols?: string[]): Promise<PriceItem[]> {
   denoms = symbols ? denoms.filter((x) => symbols.includes(x)) : denoms;
 
   return denoms.map((denom) => {
-    const a = prices.filter(({ symbol }) => symbol === denom).map(Number);
-    const averagePrice = a.reduce((acc, cur) => acc + cur, 0) / a.length;
+    const priceList = prices
+      .filter(({ symbol }) => symbol === denom)
+      .map((x) => Number(x.price));
+    const averagePrice =
+      priceList.reduce((acc, cur) => acc + cur, 0) / priceList.length;
 
     return {
       symbol: denom,

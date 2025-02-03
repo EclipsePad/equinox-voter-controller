@@ -31,7 +31,7 @@ function correctWeights(
     weight: (1 - sumOthers).toString(),
   };
 
-  return [...result, lastWeight];
+  return [...result, lastWeight].filter((x) => Number(x.weight));
 }
 
 export function calcEstimatedDaoProfit(
