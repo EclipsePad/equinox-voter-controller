@@ -188,4 +188,119 @@ describe("Delegation DAO rewards optimization", () => {
 
     expect(daoWeights).toStrictEqual(expected);
   });
+
+  test("calcOptimizedDaoWeights proper rounding", () => {
+    const electorEssence = 0;
+    const daoEssence = 1_000;
+    const slackerEssence = 0;
+
+    const electorWeights: WeightAllocationItem[] = [];
+
+    const bribes: BribesAllocationItem[] = [
+      {
+        lp_token: "a",
+        rewards: [
+          {
+            amount: "1000",
+            symbol: TOKEN.ECLIP,
+          },
+        ],
+      },
+      {
+        lp_token: "b",
+        rewards: [
+          {
+            amount: "1000",
+            symbol: TOKEN.ECLIP,
+          },
+        ],
+      },
+      {
+        lp_token: "c",
+        rewards: [
+          {
+            amount: "1000",
+            symbol: TOKEN.ECLIP,
+          },
+        ],
+      },
+      {
+        lp_token: "d",
+        rewards: [
+          {
+            amount: "1000",
+            symbol: TOKEN.ECLIP,
+          },
+        ],
+      },
+      {
+        lp_token: "e",
+        rewards: [
+          {
+            amount: "1000",
+            symbol: TOKEN.ECLIP,
+          },
+        ],
+      },
+    ];
+
+    const prices: PriceItem[] = [
+      { price: "0.02", symbol: TOKEN.ASTRO },
+      { price: "5", symbol: TOKEN.ATOM },
+      { price: "0.01", symbol: TOKEN.ECLIP },
+      { price: "0.25", symbol: TOKEN.NTRN },
+    ];
+
+    const expected: WeightAllocationItem[] = [
+      { lp_token: "a", weight: "0.2" },
+      { lp_token: "b", weight: "0.2" },
+      { lp_token: "c", weight: "0.2" },
+      { lp_token: "d", weight: "0.2" },
+      { lp_token: "e", weight: "0.2" },
+    ];
+
+    const daoWeights = calcOptimizedDaoWeights(
+      electorEssence,
+      daoEssence,
+      slackerEssence,
+      electorWeights,
+      bribes,
+      prices,
+      ITERATIONS,
+      DECIMAL_PLACES
+    );
+
+    expect(daoWeights).toStrictEqual(expected);
+  });
+
+  test("calcOptimizedDaoWeights no data", () => {
+    const electorEssence = 0;
+    const daoEssence = 1_000;
+    const slackerEssence = 0;
+
+    const electorWeights: WeightAllocationItem[] = [];
+    const bribes: BribesAllocationItem[] = [];
+
+    const prices: PriceItem[] = [
+      { price: "0.02", symbol: TOKEN.ASTRO },
+      { price: "5", symbol: TOKEN.ATOM },
+      { price: "0.01", symbol: TOKEN.ECLIP },
+      { price: "0.25", symbol: TOKEN.NTRN },
+    ];
+
+    const expected: WeightAllocationItem[] = [];
+
+    const daoWeights = calcOptimizedDaoWeights(
+      electorEssence,
+      daoEssence,
+      slackerEssence,
+      electorWeights,
+      bribes,
+      prices,
+      ITERATIONS,
+      DECIMAL_PLACES
+    );
+
+    expect(daoWeights).toStrictEqual(expected);
+  });
 });

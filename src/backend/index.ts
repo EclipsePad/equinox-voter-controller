@@ -67,7 +67,7 @@ import {
   const slackerEssence = Number(slacker_essence);
 
   if (!electorWeights.length) {
-    // return;
+    return;
   }
 
   const optimizedDaoWeights = calcOptimizedDaoWeights(
