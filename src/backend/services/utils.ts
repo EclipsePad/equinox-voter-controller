@@ -156,7 +156,7 @@ interface TaskScheduler {
 class ScheduledTaskRunner implements TaskScheduler {
   scheduleTask(targetHour: number, taskFunction: () => Promise<void>): void {
     const timeUntilTarget = this.getTimeUntilTarget(targetHour);
-    l(`Task scheduled to run in ${timeUntilTarget / (60 * 1e3)} minutes`);
+    l(`Task scheduled to run in ${floor(timeUntilTarget / 60_000)} minutes`);
 
     setTimeout(async () => {
       try {
@@ -175,11 +175,6 @@ class ScheduledTaskRunner implements TaskScheduler {
       0,
       0
     );
-
-    // If it's already past target hour UTC, schedule for next day
-    if (now.getUTCHours() >= targetHour) {
-      targetTime.setDate(targetTime.getDate() + 1);
-    }
 
     return targetTime.getTime() - now.getTime();
   }

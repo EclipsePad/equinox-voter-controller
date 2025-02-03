@@ -100,6 +100,12 @@ export type ExecuteMsg = {
   pause: {};
 } | {
   unpause: {};
+} | {
+  fix_bonded_vault: {
+    bonded_vault_creation_date?: number | null;
+    tier_4_vault_creation_date?: number | null;
+    user: string;
+  };
 };
 export type Binary = string;
 export interface Cw20ReceiveMsg {
@@ -176,6 +182,11 @@ export type QueryMsg = {
     user: string;
   };
 } | {
+  query_bonded_vault_creation_date_list: {
+    amount: number;
+    start_from?: string | null;
+  };
+} | {
   query_beclip_supply: {};
 };
 export interface MigrateMsg {
@@ -203,6 +214,7 @@ export interface QueryBalancesResponse {
   replenished: Uint128;
 }
 export type Uint64 = number;
+export type ArrayOfTupleOfAddrAndNullableUint64 = [Addr, number | null][];
 export interface Config {
   admin: Addr;
   beclip_address?: Addr | null;

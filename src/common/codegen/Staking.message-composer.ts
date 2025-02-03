@@ -8,7 +8,7 @@ import { Coin } from "@cosmjs/amino";
 import { MsgExecuteContractEncodeObject } from "@cosmjs/cosmwasm-stargate";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { toUtf8 } from "@cosmjs/encoding";
-import { Decimal, Addr, Uint128, InstantiateMsg, PaginationConfig, ExecuteMsg, Binary, Cw20ReceiveMsg, QueryMsg, MigrateMsg, Vault, QueryAprInfoResponse, AprInfoItem, LockingAprItem, QueryBalancesResponse, Uint64, Config, QueryEssenceResponse, ArrayOfTupleOfAddrAndEssenceInfo, EssenceInfo, ArrayOfTupleOfAddrAndArrayOfLockerInfo, LockerInfo, ArrayOfQueryEssenceListResponseItem, QueryEssenceListResponseItem, Boolean, QueryRewardsReductionInfoResponse, StakerInfoResponse, EssenceAndRewardsInfo, StakerInfo, ArrayOfTupleOfAddrAndStakerInfo, StateResponse, State, UsersAmountResponse, ArrayOfUint128 } from "./Staking.types";
+import { Decimal, Addr, Uint128, InstantiateMsg, PaginationConfig, ExecuteMsg, Binary, Cw20ReceiveMsg, QueryMsg, MigrateMsg, Vault, QueryAprInfoResponse, AprInfoItem, LockingAprItem, QueryBalancesResponse, Uint64, ArrayOfTupleOfAddrAndNullableUint64, Config, QueryEssenceResponse, ArrayOfTupleOfAddrAndEssenceInfo, EssenceInfo, ArrayOfTupleOfAddrAndArrayOfLockerInfo, LockerInfo, ArrayOfQueryEssenceListResponseItem, QueryEssenceListResponseItem, Boolean, QueryRewardsReductionInfoResponse, StakerInfoResponse, EssenceAndRewardsInfo, StakerInfo, ArrayOfTupleOfAddrAndStakerInfo, StateResponse, State, UsersAmountResponse, ArrayOfUint128 } from "./Staking.types";
 export interface StakingMsg {
   contractAddress: string;
   sender: string;
@@ -108,6 +108,15 @@ export interface StakingMsg {
   }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
   pause: (_funds?: Coin[]) => MsgExecuteContractEncodeObject;
   unpause: (_funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  fixBondedVault: ({
+    bondedVaultCreationDate,
+    tier4VaultCreationDate,
+    user
+  }: {
+    bondedVaultCreationDate?: number;
+    tier4VaultCreationDate?: number;
+    user: string;
+  }, _funds?: Coin[]) => MsgExecuteContractEncodeObject;
 }
 export class StakingMsgComposer implements StakingMsg {
   sender: string;
@@ -135,6 +144,7 @@ export class StakingMsgComposer implements StakingMsg {
     this.decreaseBalance = this.decreaseBalance.bind(this);
     this.pause = this.pause.bind(this);
     this.unpause = this.unpause.bind(this);
+    this.fixBondedVault = this.fixBondedVault.bind(this);
   }
   receive = ({
     amount,
@@ -505,6 +515,31 @@ export class StakingMsgComposer implements StakingMsg {
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
           unpause: {}
+        })),
+        funds: _funds
+      })
+    };
+  };
+  fixBondedVault = ({
+    bondedVaultCreationDate,
+    tier4VaultCreationDate,
+    user
+  }: {
+    bondedVaultCreationDate?: number;
+    tier4VaultCreationDate?: number;
+    user: string;
+  }, _funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(JSON.stringify({
+          fix_bonded_vault: {
+            bonded_vault_creation_date: bondedVaultCreationDate,
+            tier_4_vault_creation_date: tier4VaultCreationDate,
+            user
+          }
         })),
         funds: _funds
       })

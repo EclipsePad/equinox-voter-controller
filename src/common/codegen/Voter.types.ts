@@ -87,6 +87,11 @@ export type ExecuteMsg = {
     weight: Decimal;
   };
 } | {
+  set_delegation_by_admin: {
+    user: string;
+    weight: Decimal;
+  };
+} | {
   place_vote: {
     weight_allocation: WeightAllocationItem[];
   };
@@ -137,6 +142,12 @@ export type QueryMsg = {
   rewards: {};
 } | {
   bribes_allocation: {};
+} | {
+  estimated_rewards: {
+    user?: string | null;
+  };
+} | {
+  optimization_data: {};
 } | {
   voting_power: {
     additional_essence?: Uint128 | null;
@@ -192,6 +203,30 @@ export type QueryMsg = {
     amount_in: Uint128;
     symbol_in: string;
   };
+} | {
+  debug_user_types: {
+    address: string;
+  };
+} | {
+  debug_splitted_user_essence_info: {
+    address: string;
+  };
+} | {
+  debug_calc_splitted_user_essence_info: {
+    address: string;
+  };
+} | {
+  debug_user: {
+    address: string;
+    block_time?: number | null;
+    step: number;
+  };
+} | {
+  debug_accumulated_rewards: {
+    address: string;
+    block_time?: number | null;
+    step: number;
+  };
 };
 export interface MigrateMsg {
   version: string;
@@ -241,15 +276,35 @@ export interface DateConfig {
   genesis_epoch_start_date: number;
   vote_delay: number;
 }
+export type ArrayOfString = string[];
+export type TupleOfEssenceInfoAndEssenceInfo = [EssenceInfo, EssenceInfo];
+export type UserType = "elector" | "delegator" | "slacker";
+export type ArrayOfUserType = UserType[];
 export interface EpochInfo {
   id: number;
   start_date: number;
+}
+export interface EstimatedRewardsResponse {
+  dao: RewardsItem[];
+  dao_delegators: RewardsItem[];
+  dao_treasury: RewardsItem[];
+  electors: RewardsItem[];
+  user: [UserType, RewardsItem[]][];
+  voter: RewardsItem[];
 }
 export type RewardsClaimStage = "swapped" | "unclaimed" | "claimed";
 export interface OperationStatusResponse {
   is_delegation_enabled: boolean;
   is_paused: boolean;
   rewards_claim_stage: RewardsClaimStage;
+}
+export interface OptimizationDataResponse {
+  bribes: BribesAllocationItem[];
+  dao_essence: Uint128;
+  dao_weights: WeightAllocationItem[];
+  elector_essence: Uint128;
+  elector_weights: WeightAllocationItem[];
+  slacker_essence: Uint128;
 }
 export type ArrayOfRewardsItem = RewardsItem[];
 export type ArrayOfRouteListItem = RouteListItem[];
@@ -260,7 +315,6 @@ export interface TokenConfig {
   is_eclip_rewards_required: boolean;
   xastro: string;
 }
-export type UserType = "elector" | "delegator" | "slacker";
 export type ArrayOfUserResponse = UserResponse[];
 export interface UserResponse {
   essence_info: EssenceInfo;

@@ -394,6 +394,63 @@ type ContractData = {
   ADDRESS: string;
 };
 
+interface AstroportPool {
+  chainId: string;
+  poolAddress: string;
+  lpAddress: string;
+  dayVolumeUsd: number;
+  poolLiquidityUsd: number;
+  poolLiquidity: number;
+  poolStakedLiquidityUsd: number;
+  poolStakedLiquidity: number;
+  config: {
+    migrateToAddress: string | null;
+  };
+  feeRate: number[];
+  poolType: string;
+  stakeable: boolean;
+  assets: {
+    symbol: string;
+    address: string;
+    amount: string;
+    price: number;
+    precision: number;
+  }[];
+  name: string;
+  isNew: boolean;
+  isIlliquid: boolean;
+  isDeregistered: boolean;
+  astroRewards: {
+    apy: number;
+    apr: number;
+    day: number;
+  };
+  totalRewards: {
+    apy: number;
+    apr: number;
+    day: number;
+  };
+  tradingFees: {
+    apy: number;
+    apr: number;
+    day: number;
+  };
+  rewards: {
+    symbol: string;
+    denom: string;
+    amountPerDay: string;
+    amountPerSecond: string;
+    priceUsd: number;
+    precision: number;
+    amountPerDayUsd: string;
+    yield: number;
+    isExternal: boolean;
+  }[];
+  vxAstroEmissions: string | null;
+  isBlocked: boolean;
+  isHidden: boolean;
+}
+
 export type {
   TokenUnverified,
   ChainType,
@@ -402,6 +459,22 @@ export type {
   NetworkName,
   ContractsConfig,
 };
+
+interface TokenInfo {
+  [denom: string]: {
+    protocol: string;
+    symbol: string;
+    token: string;
+    icon: string;
+    decimals: number;
+    coingeckoId: string;
+    originDenom: string;
+    originChainId: string;
+    chainId: string;
+    priceUsd: number;
+    isHidden: boolean;
+  };
+}
 
 export {
   SetMetadataMsg,
@@ -441,4 +514,6 @@ export {
   AssetDescription,
   PoolDatabase,
   DistributedRewards,
+  AstroportPool,
+  TokenInfo,
 };

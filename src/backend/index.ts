@@ -1,5 +1,5 @@
 import express from "express";
-import { getLast, l, wait } from "../common/utils";
+import { getLast, l, li, wait } from "../common/utils";
 import { text, json } from "body-parser";
 import cors from "cors";
 import { api } from "./routes/api";
@@ -14,6 +14,11 @@ import { addEssence, addVoteResults, addVoters } from "./db/requests";
 import { getEssence } from "./middleware/api";
 import { DatabaseClient } from "./db/client";
 import { CHAIN_ID, MS_PER_SECOND, SNAPSHOT, STAKING, VOTER } from "./constants";
+import { getAllPrices } from "./helpers";
+import {
+  calcEstimatedDaoProfit,
+  calcOptimizedDaoWeights,
+} from "./helpers/math";
 import {
   getCwExecHelpers,
   getCwQueryHelpers,
@@ -91,6 +96,85 @@ app.listen(PORT, async () => {
       await dbClient.disconnect();
     }
   );
+
+  // service to rebalance delegation DAO weights
+  setInterval(async () => {
+    try {
+      const configJsonStr = await readFile(PATH_TO_CONFIG_JSON, {
+        encoding: ENCODING,
+      });
+      const CHAIN_CONFIG: ChainConfig = JSON.parse(configJsonStr);
+      const {
+        PREFIX,
+        OPTION: {
+          RPC_LIST: [RPC],
+          DENOM,
+          GAS_PRICE_AMOUNT,
+        },
+      } = getChainOptionById(CHAIN_CONFIG, CHAIN_ID);
+
+      const gasPrice = `${GAS_PRICE_AMOUNT}${DENOM}`;
+      const { signer, owner } = await getSigner(PREFIX, SEED);
+      const { voter } = await getCwQueryHelpers(CHAIN_ID, RPC);
+      const h = await getCwExecHelpers(CHAIN_ID, RPC, owner, signer);
+
+      const {
+        elector_essence,
+        dao_essence,
+        slacker_essence,
+        elector_weights: electorWeights,
+        dao_weights: daoWeights,
+        bribes,
+      } = await voter.cwQueryOptimizationData();
+      const symbols = [
+        ...new Set(bribes.flatMap((x) => x.rewards).map((x) => x.symbol)),
+      ];
+      const prices = await getAllPrices(symbols);
+      const electorEssence = Number(elector_essence);
+      const daoEssence = Number(dao_essence);
+      const slackerEssence = Number(slacker_essence);
+
+      if (!electorWeights.length) {
+        return;
+      }
+
+      const optimizedDaoWeights = calcOptimizedDaoWeights(
+        electorEssence,
+        daoEssence,
+        slackerEssence,
+        electorWeights,
+        bribes,
+        prices,
+        VOTER.OPTIMIZER.ITERATIONS,
+        VOTER.OPTIMIZER.DECIMAL_PLACES
+      );
+
+      const maxDaoProfit = calcEstimatedDaoProfit(
+        electorEssence,
+        daoEssence,
+        slackerEssence,
+        electorWeights,
+        optimizedDaoWeights,
+        bribes,
+        prices
+      );
+      const daoProfit = calcEstimatedDaoProfit(
+        electorEssence,
+        daoEssence,
+        slackerEssence,
+        electorWeights,
+        daoWeights,
+        bribes,
+        prices
+      );
+
+      if (Math.abs(1 - daoProfit / maxDaoProfit) > VOTER.REBALANCER.THRESHOLD) {
+        await h.voter.cwPlaceVoteAsDao(optimizedDaoWeights, gasPrice);
+      }
+    } catch (error) {
+      l(error);
+    }
+  }, VOTER.REBALANCER.PERIOD * MS_PER_SECOND);
 
   // service to make regular snapshots
   setInterval(async () => {

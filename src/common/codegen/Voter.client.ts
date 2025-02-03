@@ -6,7 +6,7 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { Coin, StdFee } from "@cosmjs/amino";
-import { InstantiateMsg, ExecuteMsg, Decimal, Uint128, AstroStakingRewardConfig, WeightAllocationItem, RouteListItem, RouteItem, QueryMsg, MigrateMsg, Addr, AddressConfig, AstroStakingRewardResponse, ArrayOfBribesAllocationItem, BribesAllocationItem, RewardsItem, DaoResponse, EssenceInfo, DateConfig, EpochInfo, RewardsClaimStage, OperationStatusResponse, ArrayOfRewardsItem, ArrayOfRouteListItem, TokenConfig, UserType, ArrayOfUserResponse, UserResponse, RewardsInfo, UserListResponse, UserListResponseItem, VoterInfoResponse, EssenceAllocationItem, VoteResults, PoolInfoItem, ArrayOfTupleOfAddrAndUint128 } from "./Voter.types";
+import { InstantiateMsg, ExecuteMsg, Decimal, Uint128, AstroStakingRewardConfig, WeightAllocationItem, RouteListItem, RouteItem, QueryMsg, MigrateMsg, Addr, AddressConfig, AstroStakingRewardResponse, ArrayOfBribesAllocationItem, BribesAllocationItem, RewardsItem, DaoResponse, EssenceInfo, DateConfig, ArrayOfString, TupleOfEssenceInfoAndEssenceInfo, UserType, ArrayOfUserType, EpochInfo, EstimatedRewardsResponse, RewardsClaimStage, OperationStatusResponse, OptimizationDataResponse, ArrayOfRewardsItem, ArrayOfRouteListItem, TokenConfig, ArrayOfUserResponse, UserResponse, RewardsInfo, UserListResponse, UserListResponseItem, VoterInfoResponse, EssenceAllocationItem, VoteResults, PoolInfoItem, ArrayOfTupleOfAddrAndUint128 } from "./Voter.types";
 export interface VoterReadOnlyInterface {
   contractAddress: string;
   addressConfig: () => Promise<AddressConfig>;
@@ -14,6 +14,12 @@ export interface VoterReadOnlyInterface {
   dateConfig: () => Promise<DateConfig>;
   rewards: () => Promise<ArrayOfRewardsItem>;
   bribesAllocation: () => Promise<ArrayOfBribesAllocationItem>;
+  estimatedRewards: ({
+    user
+  }: {
+    user?: string;
+  }) => Promise<EstimatedRewardsResponse>;
+  optimizationData: () => Promise<OptimizationDataResponse>;
   votingPower: ({
     additionalEssence,
     address
@@ -79,6 +85,39 @@ export interface VoterReadOnlyInterface {
     amountIn: Uint128;
     symbolIn: string;
   }) => Promise<Uint128>;
+  debugUserTypes: ({
+    address
+  }: {
+    address: string;
+  }) => Promise<ArrayOfUserType>;
+  debugSplittedUserEssenceInfo: ({
+    address
+  }: {
+    address: string;
+  }) => Promise<TupleOfEssenceInfoAndEssenceInfo>;
+  debugCalcSplittedUserEssenceInfo: ({
+    address
+  }: {
+    address: string;
+  }) => Promise<TupleOfEssenceInfoAndEssenceInfo>;
+  debugUser: ({
+    address,
+    blockTime,
+    step
+  }: {
+    address: string;
+    blockTime?: number;
+    step: number;
+  }) => Promise<ArrayOfString>;
+  debugAccumulatedRewards: ({
+    address,
+    blockTime,
+    step
+  }: {
+    address: string;
+    blockTime?: number;
+    step: number;
+  }) => Promise<ArrayOfString>;
 }
 export class VoterQueryClient implements VoterReadOnlyInterface {
   client: CosmWasmClient;
@@ -91,6 +130,8 @@ export class VoterQueryClient implements VoterReadOnlyInterface {
     this.dateConfig = this.dateConfig.bind(this);
     this.rewards = this.rewards.bind(this);
     this.bribesAllocation = this.bribesAllocation.bind(this);
+    this.estimatedRewards = this.estimatedRewards.bind(this);
+    this.optimizationData = this.optimizationData.bind(this);
     this.votingPower = this.votingPower.bind(this);
     this.votingPowerList = this.votingPowerList.bind(this);
     this.voterXastro = this.voterXastro.bind(this);
@@ -106,6 +147,11 @@ export class VoterQueryClient implements VoterReadOnlyInterface {
     this.astroStakingRewards = this.astroStakingRewards.bind(this);
     this.astroStakingTreasuryRewards = this.astroStakingTreasuryRewards.bind(this);
     this.simulateEclipAmountOut = this.simulateEclipAmountOut.bind(this);
+    this.debugUserTypes = this.debugUserTypes.bind(this);
+    this.debugSplittedUserEssenceInfo = this.debugSplittedUserEssenceInfo.bind(this);
+    this.debugCalcSplittedUserEssenceInfo = this.debugCalcSplittedUserEssenceInfo.bind(this);
+    this.debugUser = this.debugUser.bind(this);
+    this.debugAccumulatedRewards = this.debugAccumulatedRewards.bind(this);
   }
   addressConfig = async (): Promise<AddressConfig> => {
     return this.client.queryContractSmart(this.contractAddress, {
@@ -130,6 +176,22 @@ export class VoterQueryClient implements VoterReadOnlyInterface {
   bribesAllocation = async (): Promise<ArrayOfBribesAllocationItem> => {
     return this.client.queryContractSmart(this.contractAddress, {
       bribes_allocation: {}
+    });
+  };
+  estimatedRewards = async ({
+    user
+  }: {
+    user?: string;
+  }): Promise<EstimatedRewardsResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      estimated_rewards: {
+        user
+      }
+    });
+  };
+  optimizationData = async (): Promise<OptimizationDataResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      optimization_data: {}
     });
   };
   votingPower = async ({
@@ -282,6 +344,73 @@ export class VoterQueryClient implements VoterReadOnlyInterface {
       }
     });
   };
+  debugUserTypes = async ({
+    address
+  }: {
+    address: string;
+  }): Promise<ArrayOfUserType> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      debug_user_types: {
+        address
+      }
+    });
+  };
+  debugSplittedUserEssenceInfo = async ({
+    address
+  }: {
+    address: string;
+  }): Promise<TupleOfEssenceInfoAndEssenceInfo> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      debug_splitted_user_essence_info: {
+        address
+      }
+    });
+  };
+  debugCalcSplittedUserEssenceInfo = async ({
+    address
+  }: {
+    address: string;
+  }): Promise<TupleOfEssenceInfoAndEssenceInfo> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      debug_calc_splitted_user_essence_info: {
+        address
+      }
+    });
+  };
+  debugUser = async ({
+    address,
+    blockTime,
+    step
+  }: {
+    address: string;
+    blockTime?: number;
+    step: number;
+  }): Promise<ArrayOfString> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      debug_user: {
+        address,
+        block_time: blockTime,
+        step
+      }
+    });
+  };
+  debugAccumulatedRewards = async ({
+    address,
+    blockTime,
+    step
+  }: {
+    address: string;
+    blockTime?: number;
+    step: number;
+  }): Promise<ArrayOfString> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      debug_accumulated_rewards: {
+        address,
+        block_time: blockTime,
+        step
+      }
+    });
+  };
 }
 export interface VoterInterface extends VoterReadOnlyInterface {
   contractAddress: string;
@@ -363,6 +492,13 @@ export interface VoterInterface extends VoterReadOnlyInterface {
   }: {
     weight: Decimal;
   }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
+  setDelegationByAdmin: ({
+    user,
+    weight
+  }: {
+    user: string;
+    weight: Decimal;
+  }, fee?: number | StdFee | "auto", memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
   placeVote: ({
     weightAllocation
   }: {
@@ -412,6 +548,7 @@ export class VoterClient extends VoterQueryClient implements VoterInterface {
     this.claimAstroRewards = this.claimAstroRewards.bind(this);
     this.claimTreasuryRewards = this.claimTreasuryRewards.bind(this);
     this.setDelegation = this.setDelegation.bind(this);
+    this.setDelegationByAdmin = this.setDelegationByAdmin.bind(this);
     this.placeVote = this.placeVote.bind(this);
     this.placeVoteAsDao = this.placeVoteAsDao.bind(this);
     this.claimRewards = this.claimRewards.bind(this);
@@ -576,6 +713,20 @@ export class VoterClient extends VoterQueryClient implements VoterInterface {
   }, fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
       set_delegation: {
+        weight
+      }
+    }, fee, memo, _funds);
+  };
+  setDelegationByAdmin = async ({
+    user,
+    weight
+  }: {
+    user: string;
+    weight: Decimal;
+  }, fee: number | StdFee | "auto" = "auto", memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      set_delegation_by_admin: {
+        user,
         weight
       }
     }, fee, memo, _funds);
