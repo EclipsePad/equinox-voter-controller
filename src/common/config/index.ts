@@ -26,7 +26,7 @@ export const CHAIN_CONFIG: ChainConfig = {
           TYPE: "main",
           DENOM: "untrn",
           CHAIN_ID: "neutron-1",
-          RPC_LIST: ["https://rpc.neutron.quokkastake.io:443"],
+          RPC_LIST: ["https://rpc.cosmos.directory/neutron"],
           GAS_PRICE_AMOUNT: 0.0053,
           STORE_CODE_GAS_MULTIPLIER: 21.5,
           CONTRACTS: [
