@@ -13,6 +13,12 @@ import {
   getCwExecHelpers,
   getCwQueryHelpers,
 } from "../../common/account/cw-helpers";
+import {
+  calcEstimatedDaoProfit,
+  calcOptimizedDaoWeights,
+} from "../helpers/math";
+import { getAllPrices } from "../helpers";
+import { VOTER } from "../constants";
 
 async function main() {
   try {
@@ -44,8 +50,60 @@ async function main() {
     const { sgMultiSend, sgSend } = sgExecHelpers;
     console.clear();
 
-    const users = await voter.pQueryUserList(15);
-    await writeSnapshot("voters", users);
+    // const users = await voter.pQueryUserList(15);
+    // await writeSnapshot("voters", users);
+
+    const {
+      elector_essence,
+      dao_essence,
+      slacker_essence,
+      elector_weights: electorWeights,
+      dao_weights: daoWeights,
+      bribes,
+    } = await voter.cwQueryOptimizationData();
+    const symbols = [
+      ...new Set(bribes.flatMap((x) => x.rewards).map((x) => x.symbol)),
+    ];
+    const prices = await getAllPrices(symbols);
+    const electorEssence = Number(elector_essence);
+    const daoEssence = Number(dao_essence);
+    const slackerEssence = Number(slacker_essence);
+
+    if (!electorWeights.length) {
+      return;
+    }
+
+    const optimizedDaoWeights = calcOptimizedDaoWeights(
+      electorEssence,
+      daoEssence,
+      slackerEssence,
+      electorWeights,
+      bribes,
+      prices,
+      VOTER.OPTIMIZER.ITERATIONS,
+      VOTER.OPTIMIZER.DECIMAL_PLACES
+    );
+
+    const maxDaoProfit = calcEstimatedDaoProfit(
+      electorEssence,
+      daoEssence,
+      slackerEssence,
+      electorWeights,
+      optimizedDaoWeights,
+      bribes,
+      prices
+    );
+    const daoProfit = calcEstimatedDaoProfit(
+      electorEssence,
+      daoEssence,
+      slackerEssence,
+      electorWeights,
+      daoWeights,
+      bribes,
+      prices
+    );
+
+    li(1 - daoProfit / maxDaoProfit);
   } catch (error) {
     l(error);
   }
