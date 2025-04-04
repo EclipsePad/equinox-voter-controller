@@ -212,7 +212,6 @@ app.listen(PORT, async () => {
   while (true) {
     // try push
     await wait(VOTER.PUSH_PERIOD * MS_PER_SECOND);
-    const { id } = await voter.cwQueryEpochInfo();
 
     try {
       await h.voter.cwPushByAdmin(gasPrice);
@@ -222,6 +221,7 @@ app.listen(PORT, async () => {
     }
 
     try {
+      const { id } = await voter.cwQueryEpochInfo();
       const { rewards_claim_stage } = await voter.cwQueryOperationStatus();
       l({ isSnapshotUpdated, rewardsClaimStage: rewards_claim_stage });
 
